@@ -11,6 +11,7 @@ sealed abstract class Concept
 object Concept {
   case object Self extends Concept
   case object Unknown extends Concept
+  case object What extends Concept
   case class Generic(val uri: String) extends Concept
   case class RealObject(val id: Long) extends Concept
 }
@@ -53,14 +54,24 @@ case class WorldGraph(
     byStart = byStart - ((e.rel, e.start) -> e),
     byEnd = byEnd - ((e.rel, e.end) -> e))
 
-  def search(e: Edge) = {
+  private def badQuestion(e: Edge) =
+    throw new IllegalArgumentException(e.toString)
+
+  def ask(e: Edge) = {
     import Concept._
     e match {
-      case Edge(Unknown, _, Unknown) => Set(e)
-      case Edge(Unknown, rel, end) => byEnd.get((rel, end))
-      case Edge(start, rel, Unknown) => byStart.get((rel, start))
-      case Edge(start, rel, end) => Set(e)
+      case Edge(What, _, What) => badQuestion(e)
+      case Edge(What, rel, end) => byEnd.get((rel, end))
+      case Edge(start, rel, What) => byStart.get((rel, start))
+      case Edge(start, rel, end) => badQuestion(e)
     }
+  }
+  def askUpdate(e: Edge) = {
+    val result = ask(e)
+    if (result.isEmpty)
+      (this, Set()) // TODO search conceptnet
+    else
+      (this, result)
   }
 }
 
@@ -81,5 +92,13 @@ case class DreamerState(
   val hotEdges: Seq[Edge])
 
 object Main {
-  def main(args: Array[String]) = println("Hello")
+  def main(args: Array[String]) = {
+    import Concept._
+    import Relation._
+    val world = Initialization.initialWorld
+    println(world.askUpdate(Edge(What,IsA,Unknown)))
+    println(world.ask(Edge(Self,IsA,What)))
+    println(world.ask(Edge(Self,AtLocation,What)))
+    println(world.ask(Edge(What,AtLocation,What)))
+  }
 }
