@@ -1,4 +1,5 @@
 import org.scalatest._
+import dreamer.concept._
 
 class MentalMapSuite extends FunSuite {
   import Concept._
