@@ -7,6 +7,7 @@ object Util {
   def uriEncode(text: String) = URLEncoder.encode(text, "UTF-8")
 
   def fetchURL(url: URL): String = {
+    debug("Fetching "+url)
     val in = new BufferedReader(new InputStreamReader(url.openStream()))
     try {
       val result = new StringBuilder()
