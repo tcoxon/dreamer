@@ -5,9 +5,9 @@ import Relation._
 
 
 object Main {
-  def main(args: Array[String]) = {
-    val map = MentalMap(Some(new ConceptNet()))
-    println(map.ask(Edge(What,IsA,Abstract("/c/en/toast"))))
-    println(map.ask(Edge(Abstract("/c/en/toast"),IsA,What)))
+  def main(args: Array[String]) {
+    val map = MentalMap(Some(new ConceptNet())) + Edge(Self,IsA,Unknown)
+
+    println("Hi")
   }
 }
