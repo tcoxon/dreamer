@@ -2,7 +2,6 @@ package dreamer.context
 import scala.util.Random
 import scalaz._, Scalaz._
 import dreamer.concept._
-import dreamer.conceptnet._
 import dreamer.util.Util._
 import Concept._
 import Relation._
@@ -12,9 +11,10 @@ case class Context(
     val mind: MentalMap,
     val r: Random=new Random)
 
+
 object Context {
 
-  def archetype(ctx: Context, real: Realized): Concept = {
+  def archetype(ctx: Context, real: Concept): Concept = {
     val results = ctx.mind.ask(Question(real, IsA, What)).map(_.end)
     if (results.size == 0) Thing else ctx.r.shuffle(results.toList).head
   }
@@ -94,13 +94,16 @@ object Context {
     (ctx.copy(mind=mind), real)
   }
 
+  type ContextM[A] = State[Context,A]
+  type ContextT[M[_],B] = StateT[M,Context,B]
+
   def toState[S,A](f: S=>(S,A)): State[S,A] =
     for (s: S <- get; val (s1, a) = f(s); _ <- put(s1)) yield a
 
-  def reifyingAsk[T](q: Question[T]): State[Context,Set[Edge]] =
+  def reifyingAsk[T](q: Question[T]): ContextM[Set[Edge]] =
     toState(ctx => reifyingAsk(ctx, q))
 
-  def reify(c: Concept): State[Context,Concept] =
+  def reify(c: Concept): ContextM[Concept] =
     toState(ctx => reify(ctx, c))
 
 }

@@ -1,6 +1,5 @@
 import org.scalatest._
 import scalaz._, Scalaz._
-import dreamer.conceptnet._
 import dreamer.concept._, Concept._, Relation._
 import dreamer.context._, Context._
 
