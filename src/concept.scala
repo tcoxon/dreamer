@@ -1,4 +1,5 @@
 package dreamer.concept
+import scala.collection.GenTraversableOnce
 import dreamer.adt._
 import dreamer.util.Util._
 
@@ -42,12 +43,41 @@ case class Question[T](
     val start: QFragment[T],
     val rel: Relation,
     val end: QFragment[T]) {
+  import Concept._
 
   def assign(f: T=>Option[Concept]): Question[T] =
     Question(start.assign(f), rel, end.assign(f))
 
+  def toEdge(f: T=>Option[Concept]): Option[Edge] = assign(f) match {
+    case Question(x: Concept, rel, y: Concept) => Some(Edge(x, rel, y))
+    case _ => None
+  }
+
   def map(f: QFragment[T]=>QFragment[T]): Question[T] =
     Question(f(start), rel, f(end))
+
+  def flatMap(f: QFragment[T]=>GenTraversableOnce[QFragment[T]])
+      : Set[Question[T]] =
+    (for (s <- f(start).toArray; e <- f(end).toArray)
+      yield Question(s, rel, e)).toSet
+
+  def unify(e: Edge): Option[Map[T,Concept]] = {
+    val Rel = e.rel
+    val A = e.start
+    val B = e.end
+    this match {
+      case Question(Variable(x), Rel, Variable(y)) =>
+        Some(Map(x -> e.start, y -> e.end))
+      case Question(A, Rel, Variable(y)) =>
+        Some(Map(y -> e.end))
+      case Question(Variable(x), Rel, B) =>
+        Some(Map(x -> e.start))
+      case Question(A, Rel, B) =>
+        Some(Map[T,Concept]())
+      case _ =>
+        None
+    }
+  }
 }
 
 
@@ -58,23 +88,6 @@ abstract class EdgeSource {
   def search[T](qs: Question[T]*): Set[Map[T,Concept]] = {
     import Concept._
 
-    def unify(q: Question[T], e: Edge): Option[Map[T,Concept]] = {
-      assert(q.rel == e.rel)
-      val A = e.start
-      val B = e.end
-      q match {
-        case Question(Variable(x), _, Variable(y)) =>
-          Some(Map(x -> e.start, y -> e.end))
-        case Question(A, _, Variable(y)) =>
-          Some(Map(y -> e.end))
-        case Question(Variable(x), _, B) =>
-          Some(Map(x -> e.start))
-        case Question(A, _, B) =>
-          Some(Map[T,Concept]())
-        case _ =>
-          None
-      }
-    }
 
     def updateQuestions(mappings: Map[T,Concept], qs: List[Question[T]])
         : List[Question[T]] =
@@ -102,7 +115,7 @@ abstract class EdgeSource {
       qs match {
         case q::qs =>
           for (e <- ask(q);
-               val unification = unify(q.assign(mappings.get), e);
+               val unification = q.assign(mappings.get).unify(e);
                if !unification.isEmpty;
                val qs1 = updateQuestions(unification.get, qs);
                result <- search1(mappings ++ unification.get, qs1))
@@ -122,10 +135,26 @@ case class MentalMap(
     realizedCounter: Int=0)
     extends EdgeSource {
   import Concept._
+  import Relation._
 
-  def allocateRealized: (MentalMap,Realized) =
+  private def allocateRealized: (MentalMap,Realized) =
     (this.copy(realizedCounter = realizedCounter + 1),
         Realized(realizedCounter))
+
+  def reify(concept: Concept): (MentalMap,Concept) = concept match {
+    case archetype: Abstract =>
+      val (this1, real) = allocateRealized
+      (this1 + Edge(real, IsA, archetype), real)
+    case _ => (this, concept)
+  }
+
+  def reify(concepts: GenTraversableOnce[Concept])
+      : (MentalMap,Map[Concept,Concept]) =
+    concepts.foldLeft((this,Map[Concept,Concept]()))((acc, concept) => {
+      val (this1, cmap) = acc
+      val (this2, realized) = this1.reify(concept)
+      (this2, cmap + (concept -> realized))
+    })
 
   def +(e: Edge) = this.copy(
     byStart = byStart + ((e.rel, e.start) -> e),

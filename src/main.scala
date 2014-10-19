@@ -7,86 +7,79 @@ import Relation._
 
 
 object Main {
-  val rootConcept = "/c/en/thing"
+  val Thing = Abstract("/c/en/thing")
 
-  case class State(val mind: MentalMap, val r: Random)
+  case class Context(
+      val mind: MentalMap,
+      val r: Random)
 
-  def realToAbstract[T](s: State)(c: QFragment[T]) = c match {
-    case x@Realized(_) =>
-      val abs = s.mind.ask(Question(x,IsA,What)).map(_.end)
-      if (abs.size == 0) Abstract(rootConcept)
-      else {
-        val arr = abs.toArray
-        arr(s.r.nextInt(abs.toArray.size))
-      }
-    case x@_ => x
+  def archetype(ctx: Context, real: Realized): Concept = {
+    val results = ctx.mind.ask(Question(real, IsA, What)).map(_.end)
+    if (results.size == 0) Thing else ctx.r.shuffle(results.toList).head
   }
+  
+  def archetype[T](ctx: Context, qf: QFragment[T]): QFragment[T] =
+    qf match {
+      case x: Realized => archetype(ctx, x)
+      case _ => qf
+    }
 
-  def fillBlanks(q: Question[Unit], c: Concept): Edge = q match {
-    case Question(What, rel, What) => Edge(c, rel, c)
-    case Question(What, rel, end: Concept) => Edge(c, rel, end)
-    case Question(start: Concept, rel, What) => Edge(start, rel, c)
-    case Question(start: Concept, rel, end: Concept) => Edge(start, rel, end)
-    case Question(_,_,_) =>
-      assert(false)
-      null
-  }
+  //def referent(ctx: Context)(label: String): Set[Concept]
 
-  def takeBlanks(es: List[Edge], q: Question[Unit]): List[Concept] = es match {
-    case e::es =>
-      q match {
-        case Question(What, _, _) => e.start :: takeBlanks(es, q)
-        case Question(_, _, What) => e.end :: takeBlanks(es, q)
-        case _ => takeBlanks(es, q)
-      }
-    case _ => Nil
-  }
 
-  def reifyingAsk[T](s: State, q: Question[Unit]): (State,Set[Edge]) = {
+  def reifyingAsk[T](ctx: Context, q: Question[T]): (Context,Set[Edge]) = {
 
-    val res = s.mind.ask(q)
-    if (res.size > 0) {
-      (s, res)
-    } else if (q.start == Self) {
-      // TODO specials, e.g. ask What,IsA,/c/en/place
-      (s, res)
-    } else if (q.end == Self) {
-      (s, res)
-    } else {
+    val current = ctx.mind.search(q)
+
+    def defaultResult = 
+      (ctx, for (mapping <- current;
+                 edge <- ctx.mind.ask(q.assign(mapping.get)))
+              yield edge)
+    
+    def dreamUpResult: (Context,Set[Edge]) = {
       debug("Question "+q.toString+" yielded no results")
-      val absQ = q.map(realToAbstract(s))
+      val absQ = q.map(archetype(ctx, _))
       debug("  Abstracted question: "+absQ.toString)
-      val possibilities = s.mind.ask(absQ).toList
+      val possibilities: Set[Map[T,Concept]] = ctx.mind.search(absQ)
       debug("  Yielded "+possibilities.size+" results")
+
       // reify a random subset of them
-      val count = s.r.nextInt(5) + 1
+      val count = ctx.r.nextInt(5) + 1
       debug("  Reifying "+count)
-      val absObjs = takeBlanks(s.r.shuffle(possibilities).take(count), q)
-      debug("  They are: "+absObjs.toString)
-      val (s1, realObjs) = absObjs.foldLeft((s,List[Realized]()))(
-          (s_acc, abs) => {
-            val (s,acc) = s_acc
-            val (mind1, real) = s.mind.allocateRealized
-            val s1 = s.copy(mind = mind1)
-            val s2 = s1.copy(mind = s1.mind + Edge(real,IsA,abs))
-            (s1, acc :+ real)
+      val archetypes: Set[Map[T,Concept]] =
+              ctx.r.shuffle(possibilities).take(count)
+      debug("  They are: "+archetypes.toString)
+
+      // reify and add them to the map
+      archetypes.foldLeft((ctx,Set[Edge]()))(
+        (ctx_acc, mapping: Map[T,Concept]) => {
+          val (ctx, acc) = ctx_acc
+          val (mind, reifyMap) = ctx.mind.reify(mapping.values)
+          val edge = q.toEdge(t =>
+            for (abs <- mapping.get(t); real <- reifyMap.get(abs))
+              yield real)
+          (ctx.copy(mind=mind), edge match {
+            case Some(x) => acc + x
+            case None => acc
           })
-      debug("  IDs: "+realObjs.toString)
-      realObjs.foldLeft((s1,Set[Edge]()))((s_acc, real) => {
-          val (s,acc) = s_acc
-          val result = fillBlanks(q, real)
-          (s.copy(mind = s.mind + result), acc + result)
-      })
+        })
+    }
+
+    if (current.size > 0) {
+      defaultResult
+    } else q match {
+      case Question(Realized(_), _, _) => dreamUpResult
+      case Question(_, _, Realized(_)) => dreamUpResult
+      case _ => defaultResult
     }
   }
 
+
   def main(args: Array[String]) {
     val mind0 = MentalMap(Some(new ConceptNet())) + Edge(Self,IsA,Unknown)
-    val (mind1, house) = mind0.allocateRealized
-    val (mind2, mountain) = mind1.allocateRealized
-    val mind3 = mind2 + Edge(house,IsA,Abstract("/c/en/house"))
-    val mind4 = mind3 + Edge(mountain,IsA,Abstract("/c/en/mountain"))
-    val state = State(mind4, new Random())
+    val (mind1, house) = mind0.reify(Abstract("/c/en/house"))
+    val (mind2, mountain) = mind1.reify(Abstract("/c/en/mountain"))
+    val state = Context(mind2, new Random())
     reifyingAsk(state, Question(What,AtLocation,house))
     reifyingAsk(state, Question(mountain,AtLocation,What))
     reifyingAsk(state, Question(What,AtLocation,mountain))
