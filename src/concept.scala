@@ -31,6 +31,7 @@ object Concept {
   // TODO case class Assertion(val edge: Edge) extends Concept
   case class Abstract(val uri: String) extends Concept
   case class Realized(val id: Long) extends Concept
+  val Thing = Abstract("/c/en/thing")
 
   // Variables are for querying and searching relations
   case class Variable[T](name: T) extends QFragment[T]

@@ -1,4 +1,6 @@
+package dreamer.context
 import scala.util.Random
+import scalaz._, Scalaz._
 import dreamer.concept._
 import dreamer.conceptnet._
 import dreamer.util.Util._
@@ -6,12 +8,11 @@ import Concept._
 import Relation._
 
 
-object Main {
-  val Thing = Abstract("/c/en/thing")
+case class Context(
+    val mind: MentalMap,
+    val r: Random=new Random)
 
-  case class Context(
-      val mind: MentalMap,
-      val r: Random)
+object Context {
 
   def archetype(ctx: Context, real: Realized): Concept = {
     val results = ctx.mind.ask(Question(real, IsA, What)).map(_.end)
@@ -27,6 +28,16 @@ object Main {
   //def referent(ctx: Context)(label: String): Set[Concept]
 
 
+  // Sometimes you can only reify one answer: e.g. if you ask where a house is
+  // we want only one answer: street. Otherwise we could leave a house and
+  // the dreamer would be in multiple locations
+  def reificationLimit[T](q: Question[T]) = q match {
+    case Question(_, IsA, Variable(_)) => Some(1)
+    case Question(_, AtLocation, Variable(_)) => Some(1)
+    case _ => None
+  }
+
+  // Ask a question, but if there are no answers, then dream some up
   def reifyingAsk[T](ctx: Context, q: Question[T]): (Context,Set[Edge]) = {
 
     val current = ctx.mind.search(q)
@@ -44,7 +55,11 @@ object Main {
       debug("  Yielded "+possibilities.size+" results")
 
       // reify a random subset of them
-      val count = ctx.r.nextInt(5) + 1
+      val count = reificationLimit(q) match {
+        case Some(1) => 1
+        case Some(x) => ctx.r.nextInt(x-1) + 1
+        case None => ctx.r.nextInt(5) + 1
+      }
       debug("  Reifying "+count)
       val archetypes: Set[Map[T,Concept]] =
               ctx.r.shuffle(possibilities).take(count)
@@ -74,16 +89,18 @@ object Main {
     }
   }
 
-
-  def main(args: Array[String]) {
-    val mind0 = MentalMap(Some(new ConceptNet())) + Edge(Self,IsA,Unknown)
-    val (mind1, house) = mind0.reify(Abstract("/c/en/house"))
-    val (mind2, mountain) = mind1.reify(Abstract("/c/en/mountain"))
-    val state = Context(mind2, new Random())
-    reifyingAsk(state, Question(What,AtLocation,house))
-    reifyingAsk(state, Question(mountain,AtLocation,What))
-    reifyingAsk(state, Question(What,AtLocation,mountain))
-    
-    println("Hi")
+  def reify(ctx: Context, c: Concept): (Context, Concept) = {
+    val (mind, real) = ctx.mind.reify(c)
+    (ctx.copy(mind=mind), real)
   }
+
+  def toState[S,A](f: S=>(S,A)): State[S,A] =
+    for (s: S <- get; val (s1, a) = f(s); _ <- put(s1)) yield a
+
+  def reifyingAsk[T](q: Question[T]): State[Context,Set[Edge]] =
+    toState(ctx => reifyingAsk(ctx, q))
+
+  def reify(c: Concept): State[Context,Concept] =
+    toState(ctx => reify(ctx, c))
+
 }
