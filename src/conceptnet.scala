@@ -61,7 +61,13 @@ class ConceptNet(
       yield urlFor(start, rel, end)
   }
 
-  private def parseResults(json: String): Set[Edge] =
+  private def fragmentMatches[T](qf: QFragment[T], uri: String) = qf match {
+    case Abstract(x) => x == uri
+    case Variable(_) => true
+    case _ => false
+  }
+
+  private def parseResults[T](q: Question[T], json: String): Set[Edge] =
     JSON.parseFull(json) match {
       case Some(obj: Map[String,List[Map[String,Any]]]) =>
         obj.get("edges") match {
@@ -70,7 +76,9 @@ class ConceptNet(
                   relStr <- edge.get("rel");
                   rel <- getRelation(relStr.toString);
                   start <- edge.get("start");
-                  end <- edge.get("end"))
+                  end <- edge.get("end");
+                  if fragmentMatches(q.start, start.toString) &&
+                      fragmentMatches(q.end, end.toString))
               yield Edge(Abstract(start.toString), rel,
                          Abstract(end.toString))).toSet
           case None => Set()
@@ -79,7 +87,7 @@ class ConceptNet(
     }
 
   private def fetch[T](q: Question[T]): Set[Edge] = urlFor(q) match {
-    case Some(url) => parseResults(fetchURL(url))
+    case Some(url) => parseResults(q, fetchURL(url))
     case None => Set()
   }
 

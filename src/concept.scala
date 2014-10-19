@@ -11,7 +11,7 @@ object Relation {
 
 sealed abstract class QFragment[+T] {
   import Concept._
-  def map[R](f: T=>Option[Concept]): QFragment[T] = this match {
+  def assign[R](f: T=>Option[Concept]): QFragment[T] = this match {
     case Variable(x) => f(x) match {
       case Some(value) => value
       case None => this
@@ -43,12 +43,15 @@ case class Question[T](
     val rel: Relation,
     val end: QFragment[T]) {
 
-  def map (f: T=>Option[Concept]): Question[T] =
-    Question(start.map(f), rel, end.map(f))
+  def assign(f: T=>Option[Concept]): Question[T] =
+    Question(start.assign(f), rel, end.assign(f))
+
+  def map(f: QFragment[T]=>QFragment[T]): Question[T] =
+    Question(f(start), rel, f(end))
 }
 
 
-trait EdgeSource {
+abstract class EdgeSource {
   def ask[T](q: Question[T]): Set[Edge]
 
   // Search for a set of variable mappings that satisfy the given questions
@@ -77,7 +80,7 @@ trait EdgeSource {
         : List[Question[T]] =
       qs match {
         case q::qs =>
-          val mapped = q.map(mappings.get)
+          val mapped = q.assign(mappings.get)
           (mapped match {
             case Question(Variable(_), _, _) => mapped
             case Question(_, _, Variable(_)) => mapped
@@ -85,9 +88,9 @@ trait EdgeSource {
             case _ =>
               q match {
                 case Question(Variable(_), _, _) =>
-                  Question(q.start, q.rel, q.end.map(mappings.get))
+                  Question(q.start, q.rel, q.end.assign(mappings.get))
                 case Question(_, _, Variable(_)) =>
-                  Question(q.start.map(mappings.get), q.rel, q.end)
+                  Question(q.start.assign(mappings.get), q.rel, q.end)
                 case _ => mapped // No choice but to query a full assertion
               }
           }) :: updateQuestions(mappings, qs)
@@ -99,7 +102,7 @@ trait EdgeSource {
       qs match {
         case q::qs =>
           for (e <- ask(q);
-               val unification = unify(q.map(mappings.get), e);
+               val unification = unify(q.assign(mappings.get), e);
                if !unification.isEmpty;
                val qs1 = updateQuestions(unification.get, qs);
                result <- search1(mappings ++ unification.get, qs1))
@@ -115,8 +118,14 @@ trait EdgeSource {
 case class MentalMap(
     upstream: Option[EdgeSource] = None,
     byStart: MultiMap[(Relation,Concept), Edge] = MultiMap(),
-    byEnd: MultiMap[(Relation,Concept), Edge] = MultiMap())
+    byEnd: MultiMap[(Relation,Concept), Edge] = MultiMap(),
+    realizedCounter: Int=0)
     extends EdgeSource {
+  import Concept._
+
+  def allocateRealized: (MentalMap,Realized) =
+    (this.copy(realizedCounter = realizedCounter + 1),
+        Realized(realizedCounter))
 
   def +(e: Edge) = this.copy(
     byStart = byStart + ((e.rel, e.start) -> e),
