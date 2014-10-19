@@ -24,9 +24,6 @@ sealed abstract class QFragment[+T] {
 sealed abstract class Concept extends QFragment[Nothing]
 object Concept {
   case object Self extends Concept
-  // A sort of 'hard' unknown. Rather than fill in the relation randomly, the
-  // system should report an outright 'I don't know'.
-  case object Unknown extends Concept
 
   // TODO case class Assertion(val edge: Edge) extends Concept
   case class Abstract(val uri: String) extends Concept

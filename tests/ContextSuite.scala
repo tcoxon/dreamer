@@ -27,6 +27,9 @@ class ContextSuite extends FunSuite {
            b <- reifyingAsk(Question(house,AtLocation,What));
            c <- reifyingAsk(Question(mountain,AtLocation,What));
            d <- reifyingAsk(Question(What,AtLocation,mountain));
+           e <- reifyingAsk(Question(house,AtLocation,mountain));
+           f <- reifyingAsk(Question(Self,AtLocation,What));
+           g <- reifyingAsk(Question(Self,IsA,What));
            ctx <- get)
         yield {
           val aSimple = a.map(edge => archetype(ctx, edge.start))
@@ -41,6 +44,9 @@ class ContextSuite extends FunSuite {
               Abstract("mountainous_region"))) != Set())
           assert(c.size == 1)
           assert((dSimple & Set(Abstract("goat"), Abstract("tree"))) != Set())
+          assert(e.size == 0)
+          assert(f.size == 0)
+          assert(g.size == 0)
           ()
         }
 
