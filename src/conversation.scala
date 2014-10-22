@@ -3,28 +3,52 @@ import scalaz._, Scalaz._
 import dreamer.concept._, Concept._, Relation._
 import dreamer.context._, Context._
 
-object Language {
-  type Phrase = List[Question[Unit]]
-  object Phrase {
-    def apply(qs: Question[Unit]*) = List(qs:_*)
-  }
 
+sealed abstract class Meaning
+object Meaning {
+  case class Ask(val question: Question[Unit]) extends Meaning
+  case class Search(val questions: Question[Int]*) extends Meaning
+  case class Tell(val edge: Edge) extends Meaning
+  case object ParseFailure extends Meaning
+
+  implicit def questionToAsk(q: Question[Unit]) = Ask(q)
+  implicit def edgeToTell(e: Edge) = Tell(e)
+}
+
+
+object ParseUtil {
   def parser(implicit lang: Language): ContextM[Parser] =
     for (ctx <- get) yield lang.parser(ctx)
+
+  def referent(text: String)(implicit lang: Language): ContextM[Set[Concept]] =
+    for (p <- parser) yield p.referent(text)
+
+  def abstractReferent(text: String)(implicit lang: Language): ContextM[Set[Concept]] =
+    for (p <- parser) yield p.referent(text)
+
+  def parse(text: String)(implicit lang: Language): ContextM[Set[Meaning]] =
+    for (p <- parser) yield p.parse(text)
+
+  def describe(concept: Concept)(implicit lang: Language): ContextM[String] =
+    for (p <- parser) yield p.describe(concept)
+
+  def describe(meaning: Meaning)(implicit lang: Language): ContextM[String] =
+    for (p <- parser) yield p.describe(meaning)
 }
+
 
 trait Language {
   def parser(ctx: Context): Parser
 }
 
 trait Parser {
-  import Language._
+  import Meaning._
 
   def abstractReferent(text: String): Set[Concept]
   def referent(text: String): Set[Concept]
 
   protected def dictionary:
-      Map[String,PartialFunction[List[String],Set[Phrase]]]
+      Map[String,PartialFunction[List[String],Set[Meaning]]]
 
   protected val OK_CHARS = ' ' +: '\'' +:
       (('a' to 'z') ++ ('A' to 'Z') ++ ('0' to '9'))
@@ -34,40 +58,41 @@ trait Parser {
         filter(OK_CHARS contains _).toLowerCase()
 
   // Returns all possible searches
-  def parse(text: String): Set[Phrase] = {
+  def parse(text: String): Set[Meaning] = {
     val norm = normalizeInput(text)
-    for ((patt, meaning) <- dictionary.toSet;
+    for ((patt, translation) <- dictionary.toSet;
          val maybeMatches = patt.r.unapplySeq(norm);
          if !maybeMatches.isEmpty;
          val matches = maybeMatches.get;
-         if meaning isDefinedAt matches;
-         phrase <- meaning(matches))
-      yield {
-        phrase
-      }
+         val _ = assert(translation isDefinedAt matches);
+         meaning <- translation(matches))
+      yield meaning
   }
 
-  def describe(q: Question[Unit]): String
-  def describe(e: Edge): String
-  def describe(qf: QFragment[Unit]): String
+  def describe(concept: Concept): String
+  def describe(meaning: Meaning): String
 }
 
-case class Conversation(
-    val lang: Language) {
-  import Language._
+case class Conversation(l: Language) {
+  import ParseUtil._, Meaning._
 
-  protected def p(ctx: Context) = lang.parser(ctx)
+  implicit val lang = l
 
   // FIXME right now, just echoes questions back
-  def query(phrase: Phrase): ContextM[String] =
-    for (ctx <- init)
-      yield phrase.map(p(ctx).describe).mkString(" && ")
+  def query(meaning: Meaning): ContextM[Meaning] =
+    for (p <- parser)
+      yield meaning
 
-  def query(text: String): ContextM[String] = State{ ctx: Context =>
-    p(ctx).parse(text).toList match {
-      case List(phrase) => query(phrase)(ctx)
-      case _ => (ctx, "I don't understand.")
-    }
-  }
+  protected def pure[A](ctx: Context, a: A): ContextM[A] =
+    State(ctx => (ctx, a))
+
+  def query(text: String): ContextM[String] =
+    for (meanings <- parse(text);
+         val ok = meanings.size == 1;
+         ctx <- get;
+         ans <- if (ok) query(meanings.head)
+                else pure(ctx,ParseFailure);
+         desc <- describe(ans))
+      yield desc
 }
 

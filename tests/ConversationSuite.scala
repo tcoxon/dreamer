@@ -2,7 +2,7 @@ import org.scalatest._
 import scalaz._, Scalaz._
 import dreamer.concept._, Concept._, Relation._
 import dreamer.context._, Context._
-import dreamer.conversation._, Language._
+import dreamer.conversation._, Meaning._, ParseUtil._
 
 class TestLanguage extends Language {
 
@@ -26,17 +26,16 @@ class TestLanguage extends Language {
     override def dictionary = Map(
         "what is (.*)" -> {case List(x) =>
           for (xref <- referent(x))
-            yield Phrase(Question(xref,IsA,What))
+            yield Ask(Question(xref,IsA,What))
         },
         "where is (.*)" -> {case List(x) =>
           for (xref <- referent(x))
-            yield Phrase(Question(xref,AtLocation,What))
+            yield Ask(Question(xref,AtLocation,What))
         }
       )
 
-    def describe(q: Question[Unit]) = q.toString
-    def describe(e: Edge) = e.toString
-    def describe(qf: QFragment[Unit]) = qf.toString
+    def describe(concept: Concept) = concept.toString
+    def describe(meaning: Meaning) = meaning.toString
   }
 }
 
@@ -69,7 +68,7 @@ class ConversationSuite extends FunSuite {
            val dog = dog_.asInstanceOf[Realized];
            p <- parser) yield {
         val result = p.parse("What is dog?")
-        assert(result == Set(List(Question(dog,IsA,What))))
+        assert(result == Set(Ask(Question(dog,IsA,What))))
       }
     run(ctx)
   }
