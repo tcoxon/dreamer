@@ -32,6 +32,10 @@ class TestLanguage extends Language {
           for (xref <- referent(x))
             yield Ask(Question(xref,AtLocation,What))
         },
+        "there is (.*)" -> {case List(x) =>
+          for (xref <- abstractReferent(x))
+            yield Reify(xref)
+        },
         "(.*) is (.*)" -> {case List(x,y) =>
           for (xref <- referent(x);
                yref <- abstractReferent(y))
@@ -90,10 +94,10 @@ class ConversationSuite extends FunSuite {
   }
   test("Asking 'what is dog' should return 'dog0 is dog','dog0 is animal'") {
     def run =
-      for (dog <- reify(Abstract("dog"));
+      for (dogResponse <- conv.queryMeaning("There is dog.");
+           val Tell(Edge(dog,IsA,Abstract(_))) = dogResponse;
            _ <- conv.query("Dog is animal.");
-           question <- parseOne("What is dog?");
-           ask0 <- conv.query(question))
+           ask0 <- conv.queryMeaning("What is dog?"))
         yield {
           println(ask0)
           assert(flattenMeaning(ask0).toSet == Set(

@@ -16,6 +16,8 @@ object Meaning {
       val followup: Option[Edge=>ContextM[Meaning]]=None) extends Meaning
   //case class Search(val questions: Seq[Question[Int]],
   //    val followup: Option[Map[Int,Concept]=>ContextM[Meaning]]=None) extends Meaning
+  case class Reify(val archetype: Concept,
+      val followup: Option[Concept=>ContextM[Meaning]]=None) extends Meaning
   case class Tell(val edge: Edge) extends Meaning
   case class Conjunction(val sub: List[Meaning]) extends Meaning
 
@@ -101,7 +103,7 @@ case class Conversation(l: Language) {
 
   implicit val lang = l
 
-  def query(meaning: Meaning): ContextM[Meaning] = meaning match {
+  def queryMeaning(meaning: Meaning): ContextM[Meaning] = meaning match {
 
     case NoOp => pure(NoOp)
     case ParseFailure => pure(ParseFailure)
@@ -125,6 +127,15 @@ case class Conversation(l: Language) {
     //case Search(question, None) =>
     //case Search(question, Some(followup)) =>
 
+    case Reify(archetype, None) =>
+      for (real <- reify(archetype))
+        yield Tell(Edge(real,IsA,archetype))
+
+    case Reify(archetype, Some(followup)) =>
+      for (real <- reify(archetype);
+           response <- followup(real))
+        yield response
+
     case Tell(edge) =>
       for (ctx <- get;
            _ <- put(ctx.copy(mind = ctx.mind + edge)))
@@ -132,8 +143,8 @@ case class Conversation(l: Language) {
 
     case Conjunction(Nil) => pure(NoOp)
     case Conjunction(head::tail) =>
-      for (headResponse <- query(head);
-           tailResponse <- query(Conjunction(tail));
+      for (headResponse <- queryMeaning(head);
+           tailResponse <- queryMeaning(Conjunction(tail));
            val tailR = tailResponse match {
              case Conjunction(ls) => ls
              case NoOp => List()
@@ -142,10 +153,14 @@ case class Conversation(l: Language) {
         yield Conjunction(headResponse::tailR)
   }
 
-  def query(text: String): ContextM[String] =
+  def queryMeaning(text: String): ContextM[Meaning] =
     for (meaning <- parseOne(text);
-         ans <- query(meaning);
-         desc <- describe(ans))
+         response <- queryMeaning(meaning))
+      yield response
+
+  def query(text: String): ContextM[String] =
+    for (response <- queryMeaning(text);
+         desc <- describe(response))
       yield desc
 }
 
