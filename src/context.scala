@@ -106,4 +106,5 @@ object Context {
   def reify(c: Concept): ContextM[Concept] =
     toState(ctx => reify(ctx, c))
 
+  def pure[T](x: T): ContextM[T] = State(ctx => (ctx, x))
 }

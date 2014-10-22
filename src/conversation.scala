@@ -6,13 +6,29 @@ import dreamer.context._, Context._
 
 sealed abstract class Meaning
 object Meaning {
-  case class Ask(val question: Question[Unit]) extends Meaning
-  case class Search(val questions: Question[Int]*) extends Meaning
-  case class Tell(val edge: Edge) extends Meaning
+  case object NoOp extends Meaning
   case object ParseFailure extends Meaning
+  case class ClarifyWhich(val question: Question[Unit],
+      val edges: Set[Edge]) extends Meaning
+  case class ClarifyWhat(val question: Question[Unit]) extends Meaning
+
+  case class Ask(val question: Question[Unit],
+      val followup: Option[Edge=>ContextM[Meaning]]=None) extends Meaning
+  //case class Search(val questions: Seq[Question[Int]],
+  //    val followup: Option[Map[Int,Concept]=>ContextM[Meaning]]=None) extends Meaning
+  case class Tell(val edge: Edge) extends Meaning
+  case class Conjunction(val sub: List[Meaning]) extends Meaning
 
   implicit def questionToAsk(q: Question[Unit]) = Ask(q)
   implicit def edgeToTell(e: Edge) = Tell(e)
+
+  def flattenMeaning(meaning: Meaning): List[Meaning] =
+    // Remove all conjunctions
+    meaning match {
+      case Conjunction(ls) =>
+        for (m <- ls; m0 <- flattenMeaning(m)) yield m0
+      case _ => List(meaning)
+    }
 }
 
 
@@ -28,6 +44,9 @@ object ParseUtil {
 
   def parse(text: String)(implicit lang: Language): ContextM[Set[Meaning]] =
     for (p <- parser) yield p.parse(text)
+
+  def parseOne(text: String)(implicit lang: Language): ContextM[Meaning] =
+    for (p <- parser) yield p.parseOne(text)
 
   def describe(concept: Concept)(implicit lang: Language): ContextM[String] =
     for (p <- parser) yield p.describe(concept)
@@ -68,30 +87,64 @@ trait Parser {
          meaning <- translation(matches))
       yield meaning
   }
+  def parseOne(text: String): Meaning = parse(text).toList match {
+    case List(meaning) => meaning
+    case _ => ParseFailure
+  }
 
   def describe(concept: Concept): String
   def describe(meaning: Meaning): String
 }
 
 case class Conversation(l: Language) {
-  import ParseUtil._, Meaning._
+  import ParseUtil._, Meaning._, Context._
 
   implicit val lang = l
 
-  // FIXME right now, just echoes questions back
-  def query(meaning: Meaning): ContextM[Meaning] =
-    for (p <- parser)
-      yield meaning
+  def query(meaning: Meaning): ContextM[Meaning] = meaning match {
 
-  protected def pure[A](ctx: Context, a: A): ContextM[A] =
-    State(ctx => (ctx, a))
+    case NoOp => pure(NoOp)
+    case ParseFailure => pure(ParseFailure)
+    case ClarifyWhich(_,_) => pure(ParseFailure)
+    case ClarifyWhat(_) => pure(ParseFailure)
+
+    case Ask(question, None) =>
+      for (edgeSet <- reifyingAsk(question);
+           val meanings = edgeSet.toList.map(Tell))
+        yield Conjunction(meanings)
+
+    case Ask(question, Some(followup)) =>
+      for (edgeSet <- reifyingAsk(question);
+           response <- edgeSet.toList match {
+               case List() => pure(ClarifyWhat(question))
+               case List(one) => followup(one)
+               case _ => pure(ClarifyWhich(question, edgeSet))
+             })
+        yield response
+
+    //case Search(question, None) =>
+    //case Search(question, Some(followup)) =>
+
+    case Tell(edge) =>
+      for (ctx <- get;
+           _ <- put(ctx.copy(mind = ctx.mind + edge)))
+        yield edge
+
+    case Conjunction(Nil) => pure(NoOp)
+    case Conjunction(head::tail) =>
+      for (headResponse <- query(head);
+           tailResponse <- query(Conjunction(tail));
+           val tailR = tailResponse match {
+             case Conjunction(ls) => ls
+             case NoOp => List()
+             case x@_ => List(x)
+           })
+        yield Conjunction(headResponse::tailR)
+  }
 
   def query(text: String): ContextM[String] =
-    for (meanings <- parse(text);
-         val ok = meanings.size == 1;
-         ctx <- get;
-         ans <- if (ok) query(meanings.head)
-                else pure(ctx,ParseFailure);
+    for (meaning <- parseOne(text);
+         ans <- query(meaning);
          desc <- describe(ans))
       yield desc
 }
