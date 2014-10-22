@@ -62,13 +62,14 @@ class ConversationSuite extends FunSuite {
       }
     run(ctx)
   }
-  test("Parsing 'what is dog' should give the abstract dog") {
+  test("Parsing 'what is dog' should give the right question") {
     val conv = Conversation(lang)
     def run =
       for (dog_ <- reify(Abstract("dog"));
            val dog = dog_.asInstanceOf[Realized];
            p <- parser) yield {
-        assert(p.parse("what is dog") == Set(List(Question(dog,IsA,What))))
+        val result = p.parse("What is dog?")
+        assert(result == Set(List(Question(dog,IsA,What))))
       }
     run(ctx)
   }

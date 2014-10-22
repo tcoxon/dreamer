@@ -37,7 +37,7 @@ trait Parser {
   def parse(text: String): Set[Phrase] = {
     val norm = normalizeInput(text)
     for ((patt, meaning) <- dictionary.toSet;
-         val maybeMatches = patt.r.unapplySeq(text);
+         val maybeMatches = patt.r.unapplySeq(norm);
          if !maybeMatches.isEmpty;
          val matches = maybeMatches.get;
          if meaning isDefinedAt matches;
