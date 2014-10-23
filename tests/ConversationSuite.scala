@@ -2,13 +2,14 @@ import org.scalatest._
 import scalaz._, Scalaz._
 import dreamer.concept._, Concept._, Relation._
 import dreamer.context._, Context._
-import dreamer.conversation._, Meaning._, LangUtil._
+import dreamer.conversation._
+import dreamer.lang._, Meaning._, LangUtil._
 
 class TestLanguage extends Language {
 
   def parser(ctx: Context) = new Parser {
 
-    val dictionary: Map[String,PartialFunction[List[String],Set[Meaning]]] =
+    val dictionary: Dictionary =
       Map(
         "what is (.*)" -> {case List(x) =>
           for (xref <- referent(x))

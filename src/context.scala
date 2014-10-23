@@ -94,6 +94,11 @@ object Context {
     (ctx.copy(mind=mind), real)
   }
 
+  def tell(ctx: Context, e: Edge): (Context, Edge) = {
+    val mind = ctx.mind + e
+    (ctx.copy(mind=mind), e)
+  }
+
   type ContextM[A] = State[Context,A]
   type ContextT[M[_],B] = StateT[M,Context,B]
 
@@ -102,6 +107,9 @@ object Context {
 
   def reify(c: Concept): ContextM[Concept] =
     State(ctx => reify(ctx, c))
+
+  def tell(e: Edge): ContextM[Edge] =
+    State(ctx => tell(ctx, e))
 
   def pure[T](x: T): ContextM[T] = State(ctx => (ctx, x))
 }
