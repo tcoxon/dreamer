@@ -97,14 +97,11 @@ object Context {
   type ContextM[A] = State[Context,A]
   type ContextT[M[_],B] = StateT[M,Context,B]
 
-  def toState[S,A](f: S=>(S,A)): State[S,A] =
-    for (s: S <- get; val (s1, a) = f(s); _ <- put(s1)) yield a
-
   def reifyingAsk[T](q: Question[T]): ContextM[Set[Edge]] =
-    toState(ctx => reifyingAsk(ctx, q))
+    State(ctx => reifyingAsk(ctx, q))
 
   def reify(c: Concept): ContextM[Concept] =
-    toState(ctx => reify(ctx, c))
+    State(ctx => reify(ctx, c))
 
   def pure[T](x: T): ContextM[T] = State(ctx => (ctx, x))
 }

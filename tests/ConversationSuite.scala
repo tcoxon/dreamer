@@ -2,28 +2,14 @@ import org.scalatest._
 import scalaz._, Scalaz._
 import dreamer.concept._, Concept._, Relation._
 import dreamer.context._, Context._
-import dreamer.conversation._, Meaning._, ParseUtil._
+import dreamer.conversation._, Meaning._, LangUtil._
 
 class TestLanguage extends Language {
 
   def parser(ctx: Context) = new Parser {
-    def abstractReferent(text: String) =
-      Set(Abstract(text))
-    
-    def referent(text: String) =
-      for (mapping <- ctx.mind.search(Question(What,IsA,Abstract(text)));
-           if mapping.size > 0;
-           if (mapping.values.head match {
-                case Realized(_) => true
-                case _ => false});
-           val ref = mapping.get(());
-           if !ref.isEmpty)
-        yield {
-          assert(mapping.size == 1)
-          ref.get
-        }
 
-    override def dictionary = Map(
+    val dictionary: Map[String,PartialFunction[List[String],Set[Meaning]]] =
+      Map(
         "what is (.*)" -> {case List(x) =>
           for (xref <- referent(x))
             yield Ask(Question(xref,IsA,What))
@@ -43,9 +29,25 @@ class TestLanguage extends Language {
         }
       )
 
-    def describe(concept: Concept) = concept.toString
-    def describe(meaning: Meaning) = meaning.toString
+    def abstractReferent(text: String) =
+      Set(Abstract(text))
+    
+    def referent(text: String) =
+      for (mapping <- ctx.mind.search(Question(What,IsA,Abstract(text)));
+           if mapping.size > 0;
+           if (mapping.values.head match {
+                case Realized(_) => true
+                case _ => false});
+           val ref = mapping.get(());
+           if !ref.isEmpty)
+        yield {
+          assert(mapping.size == 1)
+          ref.get
+        }
   }
+
+  def describe(concept: Concept) = pure(concept.toString)
+  def describe(meaning: Meaning) = pure(meaning.toString)
 }
 
 

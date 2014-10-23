@@ -34,7 +34,7 @@ object Meaning {
 }
 
 
-object ParseUtil {
+object LangUtil {
   def parser(implicit lang: Language): ContextM[Parser] =
     for (ctx <- get) yield lang.parser(ctx)
 
@@ -51,15 +51,18 @@ object ParseUtil {
     for (p <- parser) yield p.parseOne(text)
 
   def describe(concept: Concept)(implicit lang: Language): ContextM[String] =
-    for (p <- parser) yield p.describe(concept)
+    for (desc <- lang.describe(concept)) yield desc
 
   def describe(meaning: Meaning)(implicit lang: Language): ContextM[String] =
-    for (p <- parser) yield p.describe(meaning)
+    for (desc <- lang.describe(meaning)) yield desc
 }
 
 
 trait Language {
   def parser(ctx: Context): Parser
+
+  def describe(concept: Concept): ContextM[String]
+  def describe(meaning: Meaning): ContextM[String]
 }
 
 trait Parser {
@@ -68,8 +71,7 @@ trait Parser {
   def abstractReferent(text: String): Set[Concept]
   def referent(text: String): Set[Concept]
 
-  protected def dictionary:
-      Map[String,PartialFunction[List[String],Set[Meaning]]]
+  def dictionary: Map[String,PartialFunction[List[String],Set[Meaning]]]
 
   protected val OK_CHARS = ' ' +: '\'' +:
       (('a' to 'z') ++ ('A' to 'Z') ++ ('0' to '9'))
@@ -94,12 +96,10 @@ trait Parser {
     case _ => ParseFailure
   }
 
-  def describe(concept: Concept): String
-  def describe(meaning: Meaning): String
 }
 
 case class Conversation(l: Language) {
-  import ParseUtil._, Meaning._, Context._
+  import LangUtil._, Meaning._, Context._
 
   implicit val lang = l
 
