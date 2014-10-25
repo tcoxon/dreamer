@@ -1,7 +1,7 @@
 package dreamer.concept
 import scala.collection.GenTraversableOnce
-import dreamer.adt._
-import dreamer.util.Util._
+import util.multimap._
+import util.Util._
 
 
 sealed abstract class Relation

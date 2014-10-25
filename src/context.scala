@@ -2,7 +2,7 @@ package dreamer.context
 import scala.util.Random
 import scalaz._, Scalaz._
 import dreamer.concept._
-import dreamer.util.Util._
+import util.Util._
 import Concept._
 import Relation._
 

@@ -5,7 +5,7 @@ import scala.util.parsing.json.JSON
 import dreamer.concept._
 import Concept._
 import Relation._
-import dreamer.util.Util._
+import util.Util._
 
 
 private object ConceptNet {

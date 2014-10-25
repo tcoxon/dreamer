@@ -1,4 +1,4 @@
-package dreamer.util
+package util
 import java.io._
 import java.net._
 

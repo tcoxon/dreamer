@@ -1,5 +1,4 @@
-package dreamer.adt
-import scala.collection.immutable._
+package util.multimap
 
 
 case class MultiMap[K,V](map: Map[K,Set[V]] = Map[K,Set[V]]()) {
