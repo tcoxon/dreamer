@@ -27,10 +27,10 @@ object Context {
 
   def ref(c: Concept): State[Context,Concept] = c match {
     case Realized(_) => for {
-      ctx: Context <- init
-      val ref = Ref(c, archetype(ctx,c))
-      _ <- put(ctx.ref(ref))
-    } yield c
+        ctx: Context <- init
+        val ref = Ref(c, archetype(ctx,c))
+        _ <- put(ctx.ref(ref))
+      } yield c
     case _ => state(c)
   }
 

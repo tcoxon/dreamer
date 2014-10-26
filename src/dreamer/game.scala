@@ -72,4 +72,13 @@ object Game {
           state(Tell(Edge(Self,AtLocation,here)::Nil))
         }): State[Context,Response]
     } yield r
+
+  def enter(target: Concept): GameAction =
+    for {
+      here <- getLocation
+      _ <- forget(Edge(Self,AtLocation,here))
+      _ <- tell(Edge(Self,AtLocation,target))
+      r <- lookAround
+    } yield r
+
 }

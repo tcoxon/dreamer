@@ -29,6 +29,14 @@ class English extends Language {
         _ <- fork(setIt(xref))
         r <- fork(leave(xref))
       } yield r
+    },
+
+    "enter (.+)" -> {case List(x) =>
+      for {
+        xref <- referent(x)
+        _ <- fork(setIt(xref))
+        r <- fork(enter(xref))
+      } yield r
     }
 
   ))
@@ -100,7 +108,7 @@ class English extends Language {
       odesc <- describe(edge.end, ObjectPos)
       _ <- ref(edge.start)
       _ <- ref(edge.end)
-      _ <- setIt(edge.start)
+      _ <- setIt(if (edge.start == Self) edge.end else edge.start)
     } yield sdesc + describeV(edge.start, edge.rel) + odesc
 
   def describe(edge: Edge): State[Context,String] = edge match {
