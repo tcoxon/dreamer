@@ -43,6 +43,12 @@ object Context {
     case _ => state(c)
   }
 
+  def clearIt: State[Context,Unit] = for {
+    ctx:Context <- get
+    val ctx1 = ctx.copy(it=None)
+    _ <- put(ctx1)
+  } yield ()
+
   def getIt: ForkedState[Context,Concept] =
     for (ctx <- fget; _ <- continueIf(!ctx.it.isEmpty))
       yield ctx.it.get.real
