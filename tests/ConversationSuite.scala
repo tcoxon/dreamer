@@ -52,8 +52,8 @@ class TestLanguage extends Language {
   def describe(response: Response): State[Context,String] =
     state(response.toString)
 
-  def describe(ctx: Context, concept: Concept, pos: NounPos): String =
-    concept.toString
+  def describe(concept: Concept, pos: NounPos): State[Context,String] =
+    state(concept.toString)
 }
 
 

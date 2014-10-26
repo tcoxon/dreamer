@@ -10,26 +10,74 @@ class English extends Language {
 
   override def dictionary: State[Context,Dictionary] = state(Map(
 
-    "look( around.*)?" -> {case _ =>
+    "(take a )?look( around.*)?" -> {case _ =>
       for {
         here <- reifyingSearch1(Question(Self, AtLocation, What))
         things <- reifyingSearchAll(Question(What, AtLocation, here))
       } yield Tell(Edge(Self,AtLocation,here) ::
           things.filter(_ != Self).map(Edge(_,AtLocation,here)))
+    },
+
+    "(take a )?look( at)? (.+)" -> {case List(_, _, x) =>
+      for {
+        xref <- referent(x)
+        _ <- fork(setIt(xref))
+        whats <- reifyingSearchAll(Question(xref,IsA,What))
+        wheres <- reifyingSearchAll(Question(xref,AtLocation,What))
+      } yield Tell(
+        whats.map(w => Edge(xref,IsA,w)) ++
+        wheres.map(w => Edge(xref,AtLocation,w)))
     }
 
   ))
 
-  def describe(ctx: Context, concept: Concept, pos: NounPos): String =
+
+  def referent(text: String): ForkedState[Context,Concept] = text match {
+    case "you" => forked(Self)
+    case "yourself" => forked(Self)
+    case "it" => for (x <- getIt) yield x
+    case _ =>
+      // TODO look up names of Abstracts rather than using uris
+      val Uri = "(a|an|the) ".r.replaceAllIn(text, "")
+      for {
+        ctx:Context <- fget
+        val ref = ctx.refList.find(r => r.arche match {
+          case Abstract(Uri) => true
+          case _ => false
+        })
+        _ <- continueIf(!ref.isEmpty)
+      } yield ref.get.real
+  }
+
+  def describeUnqual(concept: Concept, pos: NounPos): State[Context,String] =
     concept match {
-      case Self => pos match {
+      case Self => state(pos match {
         case SubjectPos => "I"
         case ObjectPos => "me"
-      }
-      case Abstract(uri) => uri // FIXME
+      })
+      case Abstract(uri) => state(uri) // FIXME TODO use name rather than uri
       case r@Realized(_) =>
-        (if (isReffed(ctx, concept)) "the " else "a ") +
-            describe(ctx, archetype(ctx, r), pos)
+        for {
+          arche <- archetype(r)
+          desc <- describeUnqual(arche, pos)
+        } yield desc
+    }
+
+  def singular(noun: String): String =
+    if (noun.length > 0 && "aeiou".contains(noun.charAt(0))) "an "+noun
+    else "a "+noun
+
+  def describe(concept: Concept, pos: NounPos): State[Context,String] =
+    concept match {
+      case Self => describeUnqual(concept, pos)
+      case Abstract(_) => describeUnqual(concept,pos).map(singular)
+      case Realized(_) =>
+        for {
+          desc <- describeUnqual(concept, pos)
+          ctx <- get
+        } yield
+          if (isIt(ctx, concept)) "it" else
+            (if (isReffed(ctx, concept)) "the "+desc else singular(desc))
     }
 
   private def describeV(subj: Concept, rel: Relation): String =
@@ -48,6 +96,9 @@ class English extends Language {
     for {
       sdesc <- describe(edge.start, SubjectPos)
       odesc <- describe(edge.end, ObjectPos)
+      _ <- ref(edge.start)
+      _ <- ref(edge.end)
+      _ <- setIt(edge.start)
     } yield sdesc + describeV(edge.start, edge.rel) + odesc
 
   def describe(edge: Edge): State[Context,String] = edge match {

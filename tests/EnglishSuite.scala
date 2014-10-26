@@ -25,11 +25,39 @@ class EnglishSuite extends FunSuite {
 
   test("Looking should yield the dreamer's location and the dog.") {
     val results = List(
-      "look", "Look around.", "look around this place!").map(
+      "take a look", "Look around.", "look around this place!").map(
         msg => conv.query(msg)(ctx)._2)
     println(results)
     results foreach {r =>
       assert(r == "I am in a house. A dog is in the house.")
     }
+  }
+  test("Looking at the dog should explain what and where it is.") {
+    def run: State[Context,Unit] =
+      for {
+        look <- conv.query("look")
+        val _ = assert(look == "I am in a house. A dog is in the house.")
+        result0 <- conv.query("Take a look at the dog.")
+        result1 <- conv.query("Look at it.")
+      } yield {
+        println(look)
+        println(result0)
+        println(result1)
+        assert(result0 == "It is a dog. It is in the house.")
+        assert(result1 == "It is a dog. It is in the house.")
+      }
+    run(ctx)
+  }
+  test("""It's wrong, but refering to something that isn't there should
+      currently return a ParseFailure.""") {
+    def run: State[Context,Unit] =
+      for {
+        _ <- conv.query("look")
+        result <- conv.query("look at the car")
+      } yield {
+        println(result)
+        assert(result == "I don't understand.")
+      }
+    run(ctx)
   }
 }

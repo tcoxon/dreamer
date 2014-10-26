@@ -30,7 +30,7 @@ trait Language {
 
   def describe(response: Response): State[Context,String]
 
-  def describe(ctx: Context, concept: Concept, pos: NounPos): String
+  def describe(concept: Concept, pos: NounPos): State[Context,String]
 
   // Common to all language implementations:
   protected val OK_CHARS = ' ' +: '\'' +:
@@ -62,11 +62,5 @@ trait Language {
   def parseSpecific(text: String): SpecificMeaning =
     join(clarify)(parse(text))
 
-  final def describe(concept: Concept, pos: NounPos): State[Context,String] = {
-    for {
-      ctx <- get
-      _ <- ref(concept)
-    } yield describe(ctx, concept, pos)
-  }
 }
 

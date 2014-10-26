@@ -11,7 +11,8 @@ import Relation._
 case class Context(
     val mind: MentalMap,
     val r: Random=new Random,
-    val refList: List[Context.Ref]=Nil) {
+    val refList: List[Context.Ref]=Nil,
+    val it: Option[Context.Ref]=None) {
 
   def ref(ref: Context.Ref): Context = ref.real match {
     case Realized(_) =>
@@ -24,11 +25,32 @@ case class Context(
 object Context {
   case class Ref(val real: Concept, val arche: Concept)
 
-  def ref(c: Concept): State[Context,Concept] = for {
-    ctx: Context <- init
-    val ref = Ref(c, archetype(ctx,c))
-    _ <- put(ctx.ref(ref))
-  } yield c
+  def ref(c: Concept): State[Context,Concept] = c match {
+    case Realized(_) => for {
+      ctx: Context <- init
+      val ref = Ref(c, archetype(ctx,c))
+      _ <- put(ctx.ref(ref))
+    } yield c
+    case _ => state(c)
+  }
+
+  def setIt(c: Concept): State[Context,Concept] = c match {
+    case Realized(_) => for {
+      ctx: Context <- init
+      val ref = Ref(c, archetype(ctx,c))
+      _ <- put(ctx.copy(it=Some(ref)))
+    } yield c
+    case _ => state(c)
+  }
+
+  def getIt: ForkedState[Context,Concept] =
+    for (ctx <- fget; _ <- continueIf(!ctx.it.isEmpty))
+      yield ctx.it.get.real
+
+  def isIt(ctx: Context, c: Concept): Boolean = ctx.it match {
+    case Some(ref) => ref.real == c
+    case _ => false
+  }
 
   def isReffed(c: Concept): State[Context,Boolean] = for {
     ctx <- init
