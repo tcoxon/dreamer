@@ -13,7 +13,7 @@ scalaSource in Compile := baseDirectory.value / "src"
 
 exportJars := true
 
-//scalacOptions ++= Seq("-unchecked")
+scalacOptions ++= Seq("-unchecked")
 
 libraryDependencies += "org.scalaz" %% "scalaz-core" % "7.1.0"
 

@@ -31,10 +31,10 @@ class ContextSuite extends FunSuite {
            g <- reifyingAsk(Question(Self,IsA,What));
            ctx <- get)
         yield {
-          val aSimple = a.map(edge => archetype(ctx, edge.start))
-          val bSimple = b.map(edge => archetype(ctx, edge.end))
-          val cSimple = c.map(edge => archetype(ctx, edge.end))
-          val dSimple = d.map(edge => archetype(ctx, edge.start))
+          val aSimple = a.map(edge => archetype(ctx, edge.start)).toSet
+          val bSimple = b.map(edge => archetype(ctx, edge.end)).toSet
+          val cSimple = c.map(edge => archetype(ctx, edge.end)).toSet
+          val dSimple = d.map(edge => archetype(ctx, edge.start)).toSet
           assert((aSimple & Set(Abstract("cat"), Abstract("dog"))) != Set())
           assert((bSimple & Set(Abstract("suburb"), Abstract("street"))) !=
               Set())

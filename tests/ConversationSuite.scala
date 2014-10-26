@@ -1,111 +1,113 @@
 import org.scalatest._
 import scalaz._, Scalaz._
+import util.forked._, ForkedState._
 import dreamer.concept._, Concept._, Relation._
 import dreamer.context._, Context._
 import dreamer.conversation._
-import dreamer.lang._, Meaning._, LangUtil._
+import dreamer.lang._, Language._
 
 class TestLanguage extends Language {
 
-  def parser(ctx: Context) = new Parser {
+  def dictionary: State[Context,Dictionary] =
+    state(Map(
+      "what is (.*)" -> {case List(x) =>
+        for {
+          xref <- referent(x)
+          xArches <- reifyingSearchAll(Question(xref,IsA,What))
+        } yield Tell(xArches.map(Edge(xref, IsA, _)))
+      },
+      "where is (.*)" -> {case List(x) =>
+        for {
+          xref <- referent(x)
+          loc <- reifyingSearch1(Question(xref,AtLocation,What))
+        } yield Tell(Edge(xref, AtLocation, loc) :: Nil)
+      },
+      "there is (.*)" -> {case List(x) =>
+        for {
+          xref <- abstractReferent(x)
+          _ <- fork(reify(xref))
+        } yield Ack
+      },
+      "(.*) is (.*)" -> {case List(x,y) =>
+        for {
+          xref <- referent(x)
+          yref <- abstractReferent(y)
+          _ <- fork(tell(Edge(xref,IsA,yref)))
+        } yield Ack
+      }
+    ))
 
-    val dictionary: Dictionary =
-      Map(
-        "what is (.*)" -> {case List(x) =>
-          for (xref <- referent(x))
-            yield Ask(Question(xref,IsA,What))
-        },
-        "where is (.*)" -> {case List(x) =>
-          for (xref <- referent(x))
-            yield Ask(Question(xref,AtLocation,What))
-        },
-        "there is (.*)" -> {case List(x) =>
-          for (xref <- abstractReferent(x))
-            yield Reify(xref)
-        },
-        "(.*) is (.*)" -> {case List(x,y) =>
-          for (xref <- referent(x);
-               yref <- abstractReferent(y))
-            yield Tell(Edge(xref,IsA,yref))
-        }
-      )
+  def abstractReferent(text: String): ForkedState[Context,Concept] =
+    fork(List(Abstract(text)))
+  
+  def referent(text: String): ForkedState[Context,Concept] =
+    for {
+      what <- reifyingSearch1(Question(What,IsA,Abstract(text)))
+      _ <- continueIf(what match {
+        case Realized(_) => true
+        case _ => false
+      })
+    } yield what
 
-    def abstractReferent(text: String) =
-      Set(Abstract(text))
-    
-    def referent(text: String) =
-      for (mapping <- ctx.mind.search(Question(What,IsA,Abstract(text)));
-           if mapping.size > 0;
-           if (mapping.values.head match {
-                case Realized(_) => true
-                case _ => false});
-           val ref = mapping.get(());
-           if !ref.isEmpty)
-        yield {
-          assert(mapping.size == 1)
-          ref.get
-        }
-  }
+  def describe(response: Response): State[Context,String] =
+    state(response.toString)
 
-  def describe(concept: Concept) = pure(concept.toString)
-  def describe(meaning: Meaning) = pure(meaning.toString)
+  def describe(ctx: Context, concept: Concept, pos: NounPos): String =
+    concept.toString
 }
 
 
 class ConversationSuite extends FunSuite {
   
   val ctx = Context(MentalMap())
-  implicit val lang = new TestLanguage()
+  val lang = new TestLanguage()
   val conv = Conversation(lang)
 
   test("Referring to dog should give the realized dog") {
     def run =
-      for (dog <- reify(Abstract("dog"));
-           p <- parser) yield {
-        assert(p.referent("dog") == Set(dog))
+      for {
+        dog <- fork(reify(Abstract("dog")))
+        dogRef <- lang.referent("dog")
+      } yield {
+        assert(dogRef == dog)
       }
     run(ctx)
   }
   test("Asking for the abstractReferent of dog should give the abstract dog") {
     def run =
-      for (dog <- reify(Abstract("dog"));
-           p <- parser) yield {
-        assert(p.abstractReferent("dog") == Set(Abstract("dog")))
+      for {
+        dog <- fork(reify(Abstract("dog")))
+        dogArche <- lang.abstractReferent("dog")
+      } yield {
+        assert(dogArche == Abstract("dog"))
       }
     run(ctx)
   }
   test("Parsing 'what is dog' should give the right question") {
     def run =
-      for (dog_ <- reify(Abstract("dog"));
-           val dog = dog_.asInstanceOf[Realized];
-           p <- parser) yield {
-        val result = p.parse("What is dog?")
-        assert(result == Set(Ask(Question(dog,IsA,What))))
+      for {
+        dog <- fork(reify(Abstract("dog")))
+        result <- lang.parse("What is dog?")
+      } yield {
+        assert(result == Tell(Edge(dog,IsA,Abstract("dog")) :: Nil))
       }
     run(ctx)
   }
-  test("Telling 'dog is animal' should update the mental map") {
-    def run =
-      for (dog <- reify(Abstract("dog"));
-           response <- conv.query("dog is animal");
-           ctx <- get)
-        yield {
-          assert(response == "Tell(Edge("+dog.toString+",IsA,Abstract(animal)))")
-          assert(ctx.mind.ask(Question(dog,IsA,Abstract("animal"))).size == 1)
-        }
-     run(ctx)
-  }
   test("Asking 'what is dog' should return 'dog0 is dog','dog0 is animal'") {
     def run =
-      for (dogResponse <- conv.queryMeaning("There is dog.");
-           val Tell(Edge(dog,IsA,Abstract(_))) = dogResponse;
-           _ <- conv.query("Dog is animal.");
-           ask0 <- conv.queryMeaning("What is dog?"))
+      for (dogResponse <- lang.parse("There is dog.");
+           val Tell(List()) = dogResponse;
+           dog <- lang.referent("dog");
+           _ <- fork(conv.query("Dog is animal."));
+           ask0 <- lang.parse("What is dog?"))
         yield {
           println(ask0)
-          assert(flattenMeaning(ask0).toSet == Set(
-              Tell(Edge(dog,IsA,Abstract("dog"))),
-              Tell(Edge(dog,IsA,Abstract("animal")))))
+          ask0 match {
+            case Tell(edges) =>
+              assert(edges.toSet == Set(Edge(dog,IsA,Abstract("dog")),
+                  Edge(dog,IsA,Abstract("animal"))))
+            case _ => assert(false)
+          }
         }
     run(ctx)
   }

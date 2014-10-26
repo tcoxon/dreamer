@@ -69,8 +69,8 @@ class ConceptNet(
 
   private def parseResults[T](q: Question[T], json: String): Set[Edge] =
     JSON.parseFull(json) match {
-      case Some(obj: Map[String,List[Map[String,Any]]]) =>
-        obj.get("edges") match {
+      case Some(obj) =>
+        obj.asInstanceOf[Map[String,List[Map[String,Any]]]].get("edges") match {
           case Some(edges) =>
             (for (edge <- edges;
                   relStr <- edge.get("rel");
