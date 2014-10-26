@@ -77,6 +77,13 @@ object Context {
   def archetype[T](qf: QFragment[T]): State[Context,QFragment[T]] =
     for (ctx <- init) yield archetype(ctx, qf)
 
+  def ask[T](q: Question[T]): State[Context,List[Edge]] =
+    State{ctx => (ctx, ctx.mind.ask(q).toList)}
+  def search[T](qs: Question[T]*): State[Context,List[Map[T,Concept]]] =
+    State{ctx => (ctx, ctx.mind.search(qs:_*).toList)}
+  def searchWhat(qs: Question[Unit]*): State[Context,List[Concept]] =
+    State{ctx => (ctx, ctx.mind.searchWhat(qs:_*).toList)}
+
   // Sometimes you can only reify one answer: e.g. if you ask where a house is
   // we want only one answer: street. Otherwise we could leave a house and
   // the dreamer would be in multiple locations

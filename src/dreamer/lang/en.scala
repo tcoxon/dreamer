@@ -4,29 +4,31 @@ import util.forked._, ForkedState._
 import dreamer.context._, Context._
 import dreamer.concept._, Concept._, Relation._
 import dreamer.lang._, Language._
+import dreamer.game._, Game._
 
 
 class English extends Language {
 
   override def dictionary: State[Context,Dictionary] = state(Map(
 
-    "(take a )?look( around.*)?" -> {case _ =>
-      for {
-        here <- reifyingSearch1(Question(Self, AtLocation, What))
-        things <- reifyingSearchAll(Question(What, AtLocation, here))
-      } yield Tell(Edge(Self,AtLocation,here) ::
-          things.filter(_ != Self).map(Edge(_,AtLocation,here)))
-    },
+    "(take a )?look( around.*)?" -> {case _ => fork(lookAround)},
 
     "(take a )?look( at)? (.+)" -> {case List(_, _, x) =>
       for {
         xref <- referent(x)
         _ <- fork(setIt(xref))
-        whats <- reifyingSearchAll(Question(xref,IsA,What))
-        wheres <- reifyingSearchAll(Question(xref,AtLocation,What))
-      } yield Tell(
-        whats.map(w => Edge(xref,IsA,w)) ++
-        wheres.map(w => Edge(xref,AtLocation,w)))
+        r <- fork(lookAt(xref))
+      } yield r
+    },
+    
+    "leave( here| this place)?" -> {case _ => fork(leave)},
+
+    "leave (.+)" -> {case List(x) =>
+      for {
+        xref <- referent(x)
+        _ <- fork(setIt(xref))
+        r <- fork(leave(xref))
+      } yield r
     }
 
   ))

@@ -125,6 +125,10 @@ abstract class EdgeSource {
     
     search1(Map(), List(qs:_*))
   }
+
+  def searchWhat(q: Question[Unit]*): Set[Concept] = {
+    search(q:_*).map(_.get(()).get)
+  }
 }
 
 case class MentalMap(

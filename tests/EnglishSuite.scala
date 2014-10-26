@@ -60,4 +60,14 @@ class EnglishSuite extends FunSuite {
       }
     run(ctx)
   }
+  test("Leaving the house should put the dreamer in the street") {
+    def run: State[Context,Unit] =
+      for {
+        result <- conv.query("leave")
+      } yield {
+        println(result)
+        assert(result == "I am in a street. A house is in the street. A garden is in the street.")
+      }
+    run(ctx)
+  }
 }
