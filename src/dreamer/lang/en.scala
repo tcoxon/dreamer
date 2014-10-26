@@ -28,7 +28,8 @@ class English extends Language {
       }
       case Abstract(uri) => uri // FIXME
       case r@Realized(_) =>
-        "the "+describe(ctx, archetype(ctx, r), pos)
+        (if (isReffed(ctx, concept)) "the " else "a ") +
+            describe(ctx, archetype(ctx, r), pos)
     }
 
   private def describeV(subj: Concept, rel: Relation): String =

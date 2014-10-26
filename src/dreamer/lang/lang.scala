@@ -63,8 +63,10 @@ trait Language {
     join(clarify)(parse(text))
 
   final def describe(concept: Concept, pos: NounPos): State[Context,String] = {
-    // TODO if realized, add it to the reflist
-    for (ctx <- get) yield describe(ctx, concept, pos)
+    for {
+      ctx <- get
+      _ <- ref(concept)
+    } yield describe(ctx, concept, pos)
   }
 }
 

@@ -10,10 +10,33 @@ import Relation._
 
 case class Context(
     val mind: MentalMap,
-    val r: Random=new Random)
+    val r: Random=new Random,
+    val refList: List[Context.Ref]=Nil) {
+
+  def ref(ref: Context.Ref): Context = ref.real match {
+    case Realized(_) =>
+      this.copy(refList= ref :: refList)
+    case _ => this
+  }
+}
 
 
 object Context {
+  case class Ref(val real: Concept, val arche: Concept)
+
+  def ref(c: Concept): State[Context,Concept] = for {
+    ctx: Context <- init
+    val ref = Ref(c, archetype(ctx,c))
+    _ <- put(ctx.ref(ref))
+  } yield c
+
+  def isReffed(c: Concept): State[Context,Boolean] = for {
+    ctx <- init
+  } yield isReffed(ctx, c)
+
+  def isReffed(ctx: Context, c: Concept): Boolean = {
+    (ctx.refList.map(_.real) contains c)
+  }
 
   def archetype(ctx: Context, real: Concept): Concept = {
     val results = ctx.mind.ask(Question(real, IsA, What)).map(_.end)
