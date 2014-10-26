@@ -158,4 +158,12 @@ object Context {
     (ctx.copy(mind=mind), e)
   }
 
+  def forget(e: Edge): State[Context,Unit] =
+    State(ctx => (forget(ctx, e), ()))
+
+  def forget(ctx: Context, e: Edge): Context = {
+    val mind = ctx.mind - e
+    ctx.copy(mind=mind)
+  }
+
 }

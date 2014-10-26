@@ -10,7 +10,7 @@ class English extends Language {
 
   override def dictionary: State[Context,Dictionary] = state(Map(
 
-    "look( around)?" -> {case _ =>
+    "look( around.*)?" -> {case _ =>
       for {
         here <- reifyingSearch1(Question(Self, AtLocation, What))
         things <- reifyingSearchAll(Question(What, AtLocation, here))
@@ -74,20 +74,3 @@ class English extends Language {
 
 }
 
-object EnglishTest {
-  import dreamer.conversation._
-
-  def main(args: Array[String]) = {
-    def run: State[Context,String] =
-      for (dog <- reify(Abstract("dog"));
-           home <- reify(Abstract("home"));
-           _ <- tell(Edge(Self,AtLocation,home));
-           _ <- tell(Edge(dog,AtLocation,home));
-           cat <- reify(Abstract("cat"));
-           garden <- reify(Abstract("garden"));
-           _ <- tell(Edge(cat,AtLocation,garden));
-           resp <- Conversation(new English).query("look"))
-        yield resp
-    println(run(Context(MentalMap()))._2)
-  }
-}
