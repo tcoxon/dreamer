@@ -29,16 +29,16 @@ class EnglishSuite extends FunSuite {
         msg => conv.query(msg)(ctx)._2)
     println(results)
     results foreach {r =>
-      assert(r == "I am in a house. A dog is in the house.")
+      assert(r == "I am in a house. A dog is in it.")
     }
   }
   test("Looking at the dog should explain what and where it is.") {
     def run: State[Context,Unit] =
       for {
         look <- conv.query("look")
-        val _ = assert(look == "I am in a house. A dog is in the house.")
-        result0 <- conv.query("Take a look at the dog.")
-        result1 <- conv.query("Look at it.")
+        val _ = assert(look == "I am in a house. A dog is in it.")
+        result0 <- conv.query("Look at it.")
+        result1 <- conv.query("Take a look at the dog.")
       } yield {
         println(look)
         println(result0)
@@ -66,7 +66,7 @@ class EnglishSuite extends FunSuite {
         result <- conv.query("leave")
       } yield {
         println(result)
-        assert(result == "I am in a street. A house is in the street. A garden is in the street.")
+        assert(result == "I am in a street. A house is in it. A garden is in the street.")
       }
     run(ctx)
   }
