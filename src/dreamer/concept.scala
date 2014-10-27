@@ -8,6 +8,7 @@ sealed abstract class Relation
 object Relation {
   case object IsA extends Relation
   case object AtLocation extends Relation
+  case class PastAction(val verb: String) extends Relation
 }
 
 sealed abstract class QFragment[+T] {

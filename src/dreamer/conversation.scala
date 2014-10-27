@@ -10,6 +10,7 @@ case class Conversation(lang: Language) {
   def query(text: String): State[Context,String] =
     for {
       response <- lang.parseSpecific(text)
+      _ <- clearIt
       desc <- lang.describe(response)
     } yield desc
 

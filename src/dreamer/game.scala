@@ -7,7 +7,8 @@ import dreamer.lang._, Language._
 
 
 object Game {
-  type GameAction = State[Context,Response]
+  type ActionResult = List[Edge]
+  type GameAction = State[Context,ActionResult]
 
 
   def createPlace: State[Context,Concept] =
@@ -41,17 +42,17 @@ object Game {
     for {
       here <- getLocation
       things <- reifyingSearch(Question(What, AtLocation, here))
-    } yield Tell(Edge(Self,AtLocation,here) ::
-        things.filter(_ != Self).map(Edge(_,AtLocation,here)))
+    } yield Edge(Self,AtLocation,here) ::
+        things.filter(_ != Self).map(Edge(_,AtLocation,here))
 
 
   def lookAt(x: Concept): GameAction =
     for {
       whats <- reifyingSearch(Question(x,IsA,What))
       wheres <- reifyingSearch(Question(x,AtLocation,What))
-    } yield Tell(
+    } yield 
       whats.map(w => Edge(x,IsA,w)) ++
-      wheres.map(w => Edge(x,AtLocation,w)))
+      wheres.map(w => Edge(x,AtLocation,w))
 
 
   def leave: GameAction =
@@ -61,7 +62,7 @@ object Game {
       _ <- forget(Edge(Self,AtLocation,here))
       _ <- tell(Edge(Self,AtLocation,up))
       r <- lookAround
-    } yield r
+    } yield Edge(Self,PastAction("left"),here) :: r
 
   def leave(location: Concept): GameAction =
     for {
@@ -69,8 +70,8 @@ object Game {
       r <- (if (here == location) {
           leave
         } else {
-          state(Tell(Edge(Self,AtLocation,here)::Nil))
-        }): State[Context,Response]
+          state(Edge(Self,AtLocation,here)::Nil)
+        }): GameAction
     } yield r
 
   def enter(target: Concept): GameAction =
@@ -79,6 +80,13 @@ object Game {
       _ <- forget(Edge(Self,AtLocation,here))
       _ <- tell(Edge(Self,AtLocation,target))
       r <- lookAround
-    } yield r
+    } yield Edge(Self,PastAction("went into"),target) :: r
 
+  implicit def actionToAmbiguousMeaning(action: GameAction): AmbiguousMeaning =
+    for {
+      edges <- fork(action)
+    } yield Tell(edges)
+
+  implicit def actionResultToResponse(result: ActionResult): Response =
+    Tell(result)
 }

@@ -11,19 +11,19 @@ class English extends Language {
 
   override def dictionary: State[Context,Dictionary] = state(Map(
 
-    "(take a )?look( around.*)?" -> {case _ => fork(lookAround)},
+    "(take a )?look( around.*)?" -> {case _ => lookAround},
 
     "(take a )?look( at)? (.+)" -> {case List(_, _, x) =>
       for {
         xref <- referent(x)
         _ <- fork(setIt(xref))
-        r <- fork(lookAt(xref))
+        r <- lookAt(xref)
       } yield r
     },
     
-    "leave( here| this place)?" -> {case _ => fork(leave)},
+    "(exit|leave)( here| this place)?" -> {case _ => leave},
 
-    "leave (.+)" -> {case List(x) =>
+    "(exit|leave) (.+)" -> {case List(_, x) =>
       for {
         xref <- referent(x)
         _ <- fork(setIt(xref))
@@ -31,7 +31,7 @@ class English extends Language {
       } yield r
     },
 
-    "enter (.+)" -> {case List(x) =>
+    "(enter|go|go into) (.+)" -> {case List(_, x) =>
       for {
         xref <- referent(x)
         _ <- fork(setIt(xref))
@@ -100,6 +100,7 @@ class English extends Language {
         case Self => "am in"
         case _ => "is in"
       }
+      case PastAction(verb) => verb
     }) + " "
 
   private def describeSVO(edge: Edge): State[Context,String] =
@@ -112,8 +113,10 @@ class English extends Language {
     } yield sdesc + describeV(edge.start, edge.rel) + odesc
 
   def describe(edge: Edge): State[Context,String] = edge match {
-    case Edge(_, IsA, _) => describeSVO(edge)
-    case Edge(x, AtLocation, y) => describeSVO(edge)
+    case Edge(_, rel, _) =>
+      rel match {
+        case _ => describeSVO(edge)
+      }
   }
 
   private def sentence(text: String): String =

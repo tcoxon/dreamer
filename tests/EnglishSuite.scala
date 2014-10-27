@@ -43,8 +43,8 @@ class EnglishSuite extends FunSuite {
         println(look)
         println(result0)
         println(result1)
-        assert(result0 == "It is a dog. It is in the house.")
-        assert(result1 == "It is a dog. It is in the house.")
+        assert(result0 == "The dog is a dog. It is in the house.")
+        assert(result1 == "The dog is a dog. It is in the house.")
       }
     run(ctx)
   }
@@ -61,13 +61,23 @@ class EnglishSuite extends FunSuite {
     run(ctx)
   }
   test("Leaving the house should put the dreamer in the street") {
-    def run: State[Context,Unit] =
+    def run0: State[Context,Unit] =
       for {
         result <- conv.query("leave")
       } yield {
         println(result)
-        assert(result == "I am in a street. A house is in it. A garden is in the street.")
+        assert(result == "I left a house. I am in a street. The house is in it. A garden is in the street.")
       }
-    run(ctx)
+    def run1: State[Context,Unit] =
+      for {
+        look <- conv.query("look")
+        result <- conv.query("leave the house")
+      } yield {
+        println(look)
+        println(result)
+        assert(result == "I left the house. I am in a street. The house is in it. A garden is in the street.")
+      }
+    run0(ctx)
+    run1(ctx)
   }
 }
