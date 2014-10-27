@@ -11,12 +11,11 @@ class English extends Language {
 
   override def dictionary: State[Context,Dictionary] = state(Map(
 
-    "(take a )?look( around.*)?" -> {case _ => lookAround},
+    "(take a )?l(ook( around.*)?)?" -> {case _ => lookAround},
 
-    "(take a )?look( at)? (.+)" -> {case List(_, _, x) =>
+    "(take a )?l(ook( at)?)? (.+)" -> {case List(_, _, _, x) =>
       for {
         xref <- referent(x)
-        _ <- fork(setIt(xref))
         r <- lookAt(xref)
       } yield r
     },
@@ -26,16 +25,55 @@ class English extends Language {
     "(exit|leave) (.+)" -> {case List(_, x) =>
       for {
         xref <- referent(x)
-        _ <- fork(setIt(xref))
         r <- fork(leave(xref))
       } yield r
     },
 
-    "(enter|go|go into) (.+)" -> {case List(_, x) =>
+    "(enter|go( into)?) (.+)" -> {case List(_, _, x) =>
       for {
         xref <- referent(x)
-        _ <- fork(setIt(xref))
         r <- fork(enter(xref))
+      } yield r
+    },
+
+    "(take|grab) (.+)" -> {case List(_, x) =>
+      for {
+        xref <- referent(x)
+        r <- fork(take(xref))
+      } yield r
+    },
+
+    "(drop|put) (.+)" -> {case List(_, x) =>
+      for {
+        xref <- referent(x)
+        here <- fork(getLocation)
+        r <- fork(drop(xref, here))
+      } yield r
+    },
+
+    "(drop|put|leave) (.+) in (.+)" -> {case List(_,x,y) =>
+      for {
+        xref <- referent(x)
+        loc <- (y match {
+            case "here" => fork(getLocation)
+            case "there" => getIt
+            case _ => referent(y)
+          }): ForkedState[Context,Concept]
+        r <- fork(drop(xref, loc))
+      } yield r
+    },
+
+    "give (.+) to (.+)" -> {case List(x,y) =>
+      for {
+        xref <- referent(x)
+        yref <- referent(y)
+        r <- fork(give(xref,yref))
+      } yield r
+    },
+
+    "i(nvent(ory)?)?" -> {case _ =>
+      for { 
+        r <- invent
       } yield r
     }
 
@@ -59,17 +97,36 @@ class English extends Language {
       } yield ref.get.real
   }
 
+  def getArchetypeName(concept: Concept): State[Context,String] =
+    concept match {
+      case Nothingness => state("nothing")
+      case Abstract(uri) =>
+        // TODO use name rather than uri
+        state(uri)
+      case _ =>
+        assert(false)
+        state(concept.toString)
+    }
+
+  def describeArchetype(concept: Concept): State[Context,String] =
+    concept match {
+      case Nothingness => getArchetypeName(concept)
+      case _ => getArchetypeName(concept).map(singular)
+    }
+
   def describeUnqual(concept: Concept, pos: NounPos): State[Context,String] =
     concept match {
       case Self => state(pos match {
         case SubjectPos => "I"
         case ObjectPos => "me"
       })
-      case Abstract(uri) => state(uri) // FIXME TODO use name rather than uri
+      case Abstract(uri) =>
+        assert(false)
+        state(uri)
       case r@Realized(_) =>
         for {
           arche <- archetype(r)
-          desc <- describeUnqual(arche, pos)
+          desc <- getArchetypeName(arche)
         } yield desc
     }
 
@@ -80,7 +137,7 @@ class English extends Language {
   def describe(concept: Concept, pos: NounPos): State[Context,String] =
     concept match {
       case Self => describeUnqual(concept, pos)
-      case Abstract(_) => describeUnqual(concept,pos).map(singular)
+      case Abstract(_) => describeArchetype(concept)
       case Realized(_) =>
         for {
           desc <- describeUnqual(concept, pos)
@@ -99,6 +156,10 @@ class English extends Language {
       case AtLocation => subj match {
         case Self => "am in"
         case _ => "is in"
+      }
+      case HasA => subj match {
+        case Self => "have"
+        case _ => "has"
       }
       case PastAction(verb) => verb
     }) + " "
@@ -122,12 +183,15 @@ class English extends Language {
   private def sentence(text: String): String =
     text.capitalize + "."
 
-  def describe(edges: List[Edge]): State[Context,List[String]] = edges match {
-    case Nil => state(Nil)
-    case e::edges => 
-      for (edesc <- describe(e); esdesc <- describe(edges))
-        yield sentence(edesc) :: esdesc
-  }
+  def describe(edges: List[Edge]): State[Context,List[String]] = for {
+    ctx <- get
+    r <- (normalizeTell(ctx,edges) match {
+        case Nil => state(Nil)
+        case e::edges => 
+          for (edesc <- describe(e); esdesc <- describe(edges))
+            yield sentence(edesc) :: esdesc
+      }): State[Context,List[String]]
+  } yield r
 
   def describe(response: Response): State[Context,String] = response match {
     case Ack => state("OK.")

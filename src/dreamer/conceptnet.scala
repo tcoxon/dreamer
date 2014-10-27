@@ -32,11 +32,13 @@ class ConceptNet(
   private def getRelationUri(r: Relation) = r match {
     case IsA => Some("/r/IsA")
     case AtLocation => Some("/r/AtLocation")
+    case HasA => Some("/r/HasA")
     case PastAction(_) => None
   }
   private def getRelation(uri: String) = uri match {
     case "/r/IsA" => Some(IsA)
     case "/r/AtLocation" => Some(AtLocation)
+    case "/r/HasA" => Some(HasA)
     case _ => None
   }
 

@@ -8,6 +8,7 @@ sealed abstract class Relation
 object Relation {
   case object IsA extends Relation
   case object AtLocation extends Relation
+  case object HasA extends Relation
   case class PastAction(val verb: String) extends Relation
 }
 
@@ -31,6 +32,7 @@ object Concept {
   case class Realized(val id: Long) extends Concept
   val Thing = Abstract("/c/en/thing")
   val Place = Abstract("/c/en/place")
+  val Nothingness = Abstract("/c/en/nothing")
 
   // Variables are for querying and searching relations
   case class Variable[T](name: T) extends QFragment[T]
