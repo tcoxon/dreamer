@@ -23,6 +23,7 @@ object Util {
     }
   }
 
-  def debug(text: String) = println("debug: "+text)
+  var hideDebug = false
+  def debug(text: String) = if (hideDebug) () else println("debug: "+text)
 
 }

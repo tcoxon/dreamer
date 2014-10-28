@@ -33,7 +33,7 @@ trait Language {
   def describe(concept: Concept, pos: NounPos): State[Context,String]
 
   // Common to all language implementations:
-  protected val OK_CHARS = ' ' +: '\'' +:
+  protected val OK_CHARS = ' ' +: '\'' +: '/' +:
       (('a' to 'z') ++ ('A' to 'Z') ++ ('0' to '9'))
 
   protected def normalizeInput(text: String) =

@@ -21,12 +21,15 @@ object Game {
 
   def locationOf(x: Concept): State[Context,Concept] = {
     for {
-      heres <- searchWhat(Question(x,AtLocation,What))
+      heres <- reifyingSearch(Question(x,AtLocation,What))
       here <- (heres match {
-          case Nil => createPlace
+          case Nil => for {
+              place <- createPlace
+              _ <- tell(Edge(x,AtLocation,place))
+            } yield place
           case h :: Nil => state(h)
-          case h1 :: h2 :: Nil =>
-            assert(false, x.toString+" at multiple locations")
+          case h1 :: hs =>
+            assert(false, x.toString+" at multiple locations: "+heres.toString)
             state(h1)
         }): State[Context,Concept]
     } yield here

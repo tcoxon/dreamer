@@ -16,7 +16,7 @@ case class Context(
 
   def ref(ref: Context.Ref): Context = ref.real match {
     case Realized(_) =>
-      this.copy(refList= ref :: refList)
+      this.copy(refList= (ref :: refList).distinct)
     case _ => this
   }
 }
@@ -108,9 +108,10 @@ object Context {
     val current = ctx.mind.search(q)
 
     def defaultResult = 
-      (ctx, for (mapping <- current.toList;
-                 edge <- ctx.mind.ask(q.assign(mapping.get)))
-              yield edge)
+      for {
+        mapping <- current.toList
+        edge <- ctx.mind.ask(q.assign(mapping.get))
+      } yield edge
     
     def dreamUpResult: (Context,List[Edge]) = {
       debug("Question "+q.toString+" yielded no results")
@@ -138,19 +139,31 @@ object Context {
           val edge = q.toEdge(t =>
             for (abs <- mapping.get(t); real <- reifyMap.get(abs))
               yield real)
-          (ctx.copy(mind=mind), edge match {
+          val mind1 = edge match {
+            case Some(e) => mind+e
+            case _ => mind
+          }
+          (ctx.copy(mind=mind1), edge match {
             case Some(x) => x::acc
             case None => acc
           })
         })
     }
 
-    if (current.size > 0) {
-      defaultResult
+    val min = reificationLimit(q) match {
+      case Some(x) => x-1
+      case None => 2
+    }
+    if (current.size > min) {
+      (ctx, defaultResult)
     } else q match {
-      case Question(Realized(_), _, _) => dreamUpResult
-      case Question(_, _, Realized(_)) => dreamUpResult
-      case _ => defaultResult
+      case Question(Realized(_), _, _) =>
+        val (ctx1,r) = dreamUpResult
+        (ctx1, defaultResult ++ r)
+      case Question(_, _, Realized(_)) =>
+        val (ctx1,r) = dreamUpResult
+        (ctx1, defaultResult ++ r)
+      case _ => (ctx, defaultResult)
     }
   }
 
