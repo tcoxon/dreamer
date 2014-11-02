@@ -21,8 +21,17 @@ class ConceptNet(
     minWeight: Double=ConceptNet.defaultMinWeight,
     maxResults: Int=ConceptNet.defaultMaxResults)
     extends EdgeSource {
+  type Self = ConceptNet
 
-  var memo = MentalMap()
+  private var memo = MentalMap()
+
+  def nameOf(c: Concept): Option[String] = memo.nameOf(c)
+  def named(name: String): Option[Concept] = memo.named(name)
+  def name(c: Concept, name: String): ConceptNet = {
+    // yuck impure
+    memo = memo.name(c, name)
+    this
+  }
 
   private def getConceptUri[T](c: QFragment[T]) = c match {
     case Variable(_) => Some("-")
@@ -70,11 +79,28 @@ class ConceptNet(
     case _ => false
   }
 
+  private def fetch[T](q: Question[T]): Set[Edge] = urlFor(q) match {
+    case Some(url) => parseResults(q, fetchURL(url))
+    case None => Set()
+  }
+
+  // The following functions are gross impure monsters.
   private def parseResults[T](q: Question[T], json: String): Set[Edge] =
     JSON.parseFull(json) match {
       case Some(obj) =>
         obj.asInstanceOf[Map[String,List[Map[String,Any]]]].get("edges") match {
           case Some(edges) =>
+            def nameNode(nodeKey: String, lemmaKey: String) {
+              for (edge <- edges;
+                   node <- edge.get(nodeKey).asInstanceOf[Option[String]];
+                   lemma <- edge.get(lemmaKey).asInstanceOf[Option[String]]) {
+                if (memo.named(lemma).isEmpty ||
+                    memo.nameOf(Abstract(node)).isEmpty)
+                  memo = memo.name(Abstract(node), lemma)
+              }
+            }
+            nameNode("start", "startLemmas")
+            nameNode("end", "endLemmas")
             (for (edge <- edges;
                   relStr <- edge.get("rel");
                   rel <- getRelation(relStr.toString);
@@ -88,11 +114,6 @@ class ConceptNet(
         }
       case _ => Set()
     }
-
-  private def fetch[T](q: Question[T]): Set[Edge] = urlFor(q) match {
-    case Some(url) => parseResults(q, fetchURL(url))
-    case None => Set()
-  }
 
   override def ask[T](q: Question[T]): Set[Edge] = {
     val cache = memo.ask(q)

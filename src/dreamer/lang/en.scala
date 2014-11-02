@@ -1,5 +1,6 @@
 package dreamer.lang.en
 import scalaz._, Scalaz._
+import util.Util._
 import util.forked._, ForkedState._
 import dreamer.context._, Context._
 import dreamer.concept._, Concept._, Relation._
@@ -85,14 +86,16 @@ class English extends Language {
     case "yourself" => forked(Self)
     case "it" => for (x <- getIt) yield x
     case _ =>
-      // TODO look up names of Abstracts rather than using uris
-      val Uri = "(a|an|the) ".r.replaceAllIn(text, "")
+      val qualStripped = "(a|an|the) ".r.replaceAllIn(text, "")
       for {
         ctx:Context <- fget
-        val ref = ctx.refList.find(r => r.arche match {
-          case Abstract(Uri) => true
-          case _ => false
-        })
+        val namedCOpt = ctx.mind.named(qualStripped)
+        val namedC = namedCOpt match {
+          case Some(x) => x
+          case _ => Abstract(qualStripped)
+        }
+        val _ = debug("namedC: "+namedC.toString)
+        val ref = ctx.refList.find(r => r.real == namedC || r.arche == namedC)
         _ <- continueIf(!ref.isEmpty)
       } yield ref.get.real
   }
@@ -100,12 +103,20 @@ class English extends Language {
   def getArchetypeName(concept: Concept): State[Context,String] =
     concept match {
       case Nothingness => state("nothing")
-      case Abstract(uri) =>
-        // TODO use name rather than uri
-        state(uri)
       case _ =>
-        assert(false)
-        state(concept.toString)
+        for (ctx <- get)
+          yield {
+            ctx.mind.nameOf(concept) match {
+              case Some(name) => name
+              case None =>
+                concept match {
+                  case Abstract(uri) => uri
+                  case _ =>
+                    assert(false)
+                    concept.toString
+                  }
+              }
+          }
     }
 
   def describeArchetype(concept: Concept): State[Context,String] =

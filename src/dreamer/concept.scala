@@ -84,7 +84,11 @@ case class Question[T](
 
 
 abstract class EdgeSource {
+  type Self <: EdgeSource
   def ask[T](q: Question[T]): Set[Edge]
+  def nameOf(c: Concept): Option[String]
+  def named(name: String): Option[Concept]
+  def name(c: Concept, name: String): Self
 
   // Search for a set of variable mappings that satisfy the given questions
   def search[T](qs: Question[T]*): Set[Map[T,Concept]] = {
@@ -138,10 +142,23 @@ case class MentalMap(
     upstream: Option[EdgeSource] = None,
     byStart: MultiMap[(Relation,Concept), Edge] = MultiMap(),
     byEnd: MultiMap[(Relation,Concept), Edge] = MultiMap(),
+    nameOfMap: Map[Concept,String] = Map(),
+    namedMap: Map[String,Concept] = Map(),
     realizedCounter: Int=0)
     extends EdgeSource {
   import Concept._
   import Relation._
+  
+  type Self = MentalMap
+
+  def nameOf(c: Concept): Option[String] =
+    nameOfMap.get(c) orElse upstream.flatMap(_.nameOf(c))
+  def named(name: String): Option[Concept] =
+    namedMap.get(name) orElse upstream.flatMap(_.named(name))
+  def name(c: Concept, name: String): MentalMap =
+    this.copy(
+      nameOfMap = nameOfMap + (c -> name),
+      namedMap = namedMap + (name -> c))
 
   private def allocateRealized: (MentalMap,Realized) =
     (this.copy(realizedCounter = realizedCounter + 1),
@@ -192,5 +209,6 @@ case class MentalMap(
       case None => local
     }
   }
+
 }
 
