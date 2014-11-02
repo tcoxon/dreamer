@@ -1,5 +1,6 @@
 package dreamer.context
 import scala.util.Random
+import scala.collection.GenTraversableOnce
 import scalaz._, Scalaz._
 import util.forked._, ForkedState._
 import dreamer.concept._
@@ -24,6 +25,8 @@ case class Context(
 
 object Context {
   case class Ref(val real: Concept, val arche: Concept)
+
+  var extraSpecification = false
 
   def ref(c: Concept): State[Context,Concept] = c match {
     case Realized(_) => for {
@@ -76,6 +79,14 @@ object Context {
       case x: Realized => archetype(ctx, x)
       case _ => qf
     }
+  def superkind[T](ctx: Context, qf: QFragment[T]): QFragment[T] =
+    qf match {
+      case x: Realized => {Thing}
+      case x: Abstract =>
+        val results = ctx.mind.searchWhat(Question(x, IsA, What))
+        if (results.size == 0) qf else ctx.r.shuffle(results.toList).head
+      case _ => qf
+    }
 
   def archetype(real: Concept): State[Context,Concept] =
     for (ctx <- init) yield archetype(ctx, real)
@@ -117,7 +128,13 @@ object Context {
       debug("Question "+q.toString+" yielded no results")
       val absQ = q.map(archetype(ctx, _))
       debug("  Abstracted question: "+absQ.toString)
-      val possibilities: List[Map[T,Concept]] = ctx.mind.search(absQ).toList
+      val possibilities: List[Map[T,Concept]] = if (extraSpecification) {
+        val absQ2 = q.map(qf => superkind(ctx, archetype(ctx, qf)))
+        debug("  Even more abstract question: "+absQ2.toString)
+        (ctx.mind.search(absQ) | ctx.mind.search(absQ2)).toList
+      } else {
+        ctx.mind.search(absQ).toList
+      }
       debug("  Yielded "+possibilities.size+" results")
 
       // reify a random subset of them
@@ -135,7 +152,8 @@ object Context {
       archetypes.foldLeft((ctx,List[Edge]()))(
         (ctx_acc, mapping: Map[T,Concept]) => {
           val (ctx, acc) = ctx_acc
-          val (mind, reifyMap) = ctx.mind.reify(mapping.values)
+          val (ctx1, reifyMap) = reify(ctx, mapping.values)
+          val mind = ctx1.mind
           val edge = q.toEdge(t =>
             for (abs <- mapping.get(t); real <- reifyMap.get(abs))
               yield real)
@@ -143,7 +161,7 @@ object Context {
             case Some(e) => mind+e
             case _ => mind
           }
-          (ctx.copy(mind=mind1), edge match {
+          (ctx1.copy(mind=mind1), edge match {
             case Some(x) => x::acc
             case None => acc
           })
@@ -194,9 +212,27 @@ object Context {
     State(ctx => reify(ctx, c))
 
   private def reify(ctx: Context, c: Concept): (Context, Concept) = {
-    val (mind, real) = ctx.mind.reify(c)
+    val arche = if (extraSpecification) {
+      val specifics = ctx.mind.searchWhat(Question(What,IsA,c))
+      if (extraSpecification && specifics.size > 4) {
+        val specific = ctx.r.shuffle(specifics).head
+        debug("Original arche was "+c.toString+"; making more specific "+
+            specific.toString)
+        specific
+      } else c
+    } else c
+
+    val (mind, real) = ctx.mind.reify(arche)
     (ctx.copy(mind=mind), real)
   }
+
+  private def reify(ctx: Context, concepts: GenTraversableOnce[Concept])
+      : (Context, Map[Concept,Concept]) =
+    concepts.foldLeft((ctx,Map[Concept,Concept]()))((acc, concept) => {
+      val (ctx1, cmap) = acc
+      val (ctx2, real) = reify(ctx1, concept)
+      (ctx2, cmap + (concept -> real))
+    })
 
   def tell(e: Edge): State[Context,Edge] =
     State(ctx => tell(ctx, e))

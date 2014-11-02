@@ -20,7 +20,8 @@ sbt run
 
 ## TODO
 
-* Extra specification: make realized objects more specific, e.g. realize a Corgi rather than a generic dog. When searching AtLocation and HasA for that concept, would then have to search the more general type too.
+* NESW to generate other locations the same.
+* "go door" to go through the door, into another location the door occupies.
 * Referent qualifiers ("the other", "that", "this", "the first", "your", "the \* from/in \*", etc.)
 * Filter conceptnet better: recursive locations, banned concepts, qualified concepts (e.g. your grandmother).
 * Spawn random things when nothing AtLocation here.
@@ -32,6 +33,7 @@ sbt run
 * NPCs
 * Reality model
 * Asking clarification: what, which
+* Bug: realized HasA's don't have an AtLocation!
 
 ## Problems with ConceptNet
 
@@ -39,3 +41,4 @@ sbt run
 * Relations are sometimes reversed, e.g. restaurant AtLocation rice
 * No quantifiers - forall, thereexists.
 * Dual-meaning nodes: java IsA island, but java IsA program_language.
+* Lack of easily queriable transitivity.
