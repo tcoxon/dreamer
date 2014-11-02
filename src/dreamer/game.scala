@@ -94,7 +94,7 @@ object Game {
       _ <- forget(Edge(Self,AtLocation,here))
       _ <- tell(Edge(Self,AtLocation,up))
       r <- lookAround
-    } yield Edge(Self,PastAction("left"),here) :: r
+    } yield Edge(Self,Verb("left"),here) :: r
 
   def leave(location: Concept): GameAction =
     for {
@@ -112,7 +112,7 @@ object Game {
       _ <- forget(Edge(Self,AtLocation,here))
       _ <- tell(Edge(Self,AtLocation,target))
       r <- lookAround
-    } yield Edge(Self,PastAction("went into"),target) :: r
+    } yield Edge(Self,Verb("went into"),target) :: r
 
   def take(item: Concept): GameAction =
     for {
@@ -120,18 +120,18 @@ object Game {
       owner <- ownerOf(item)
       r <- (owner match {
         case Some(Self) =>
-          state(Edge(Self,PastAction("already have"),item) :: Nil)
+          state(Edge(Self,Verb("already have"),item) :: Nil)
         case None => for {
             _ <- forget(Edge(item,AtLocation,loc))
             _ <- tell(Edge(item,AtLocation,Self))
             _ <- tell(Edge(Self,HasA,item))
-          } yield Edge(Self,PastAction("took"),item) :: Nil
+          } yield Edge(Self,Verb("took"),item) :: Nil
         case Some(owner) => for {
             _ <- forget(Edge(item,AtLocation,loc))
             _ <- forget(Edge(owner,HasA,item))
             _ <- tell(Edge(item,AtLocation,Self))
             _ <- tell(Edge(Self,HasA,item))
-          } yield Edge(Self,PastAction("took"),item) :: Nil
+          } yield Edge(Self,Verb("took"),item) :: Nil
       }): GameAction
     } yield r
 
@@ -142,9 +142,9 @@ object Game {
             _ <- forget(Edge(item,AtLocation,Self))
             _ <- forget(Edge(Self,HasA,item))
             _ <- tell(Edge(item,AtLocation,location))
-          } yield Edge(Self,PastAction("dropped"),item) ::
+          } yield Edge(Self,Verb("dropped"),item) ::
             Edge(item,AtLocation,location) :: Nil
-        case _ => state(Edge(Self,PastAction("don't have"),item) :: Nil)
+        case _ => state(Edge(Self,Verb("don't have"),item) :: Nil)
       }): GameAction
   } yield r
 
@@ -156,9 +156,9 @@ object Game {
             _ <- forget(Edge(Self,HasA,item))
             _ <- tell(Edge(item,AtLocation,to))
             _ <- tell(Edge(to,HasA,item))
-          } yield Edge(Self,PastAction("gave"),item) ::
+          } yield Edge(Self,Verb("gave"),item) ::
             Edge(to,HasA,item) :: Nil
-        case _ => state(Edge(Self,PastAction("don't have"),item) :: Nil)
+        case _ => state(Edge(Self,Verb("don't have"),item) :: Nil)
       }): GameAction
   } yield r
 

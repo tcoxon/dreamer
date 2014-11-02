@@ -18,9 +18,8 @@ sbt one-jar
 sbt run
 ```
 
-### TODO
+## TODO
 
-* Rename PastAction relation to Verb.
 * Referent qualifiers ("the other", "that", "this", "the first", "your", "the \* from/in \*", etc.)
 * Filter conceptnet better: recursive locations, banned concepts, qualified concepts (e.g. your grandmother).
 * Spawn random things when nothing AtLocation here.
@@ -31,3 +30,10 @@ sbt run
 * Refine 'it'. Need to avoid "I am in it." ??
 * NPCs
 * Reality model
+
+## Problems with ConceptNet
+
+* It can be offensive. Unfiltered, it will put gay people in closets and prostitutes in bedrooms.
+* Relations are sometimes reversed (sorry, can't remember the example).
+* No quantifiers - forall, thereexists.
+* Dual-meaning nodes: java IsA island, but java IsA program_language.

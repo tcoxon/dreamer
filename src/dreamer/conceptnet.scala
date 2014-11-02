@@ -42,7 +42,7 @@ class ConceptNet(
     case IsA => Some("/r/IsA")
     case AtLocation => Some("/r/AtLocation")
     case HasA => Some("/r/HasA")
-    case PastAction(_) => None
+    case Verb(_) => None
   }
   private def getRelation(uri: String) = uri match {
     case "/r/IsA" => Some(IsA)

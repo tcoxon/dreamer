@@ -172,7 +172,7 @@ class English extends Language {
         case Self => "have"
         case _ => "has"
       }
-      case PastAction(verb) => verb
+      case Verb(verb) => verb
     }) + " "
 
   private def describeSVO(edge: Edge): State[Context,String] =
