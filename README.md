@@ -20,6 +20,8 @@ sbt run
 
 ## TODO
 
+* More permanent caching.
+* Ask ConceptNet even if we have one relation that matches a question.
 * Referent qualifiers ("the other", "that", "this", "the first", "your", "the \* from/in \*", etc.)
 * Filter conceptnet better: recursive locations, banned concepts, qualified concepts (e.g. your grandmother).
 * Spawn random things when nothing AtLocation here.
@@ -30,6 +32,7 @@ sbt run
 * Refine 'it'. Need to avoid "I am in it." ??
 * NPCs
 * Reality model
+* Asking clarification: what, which
 
 ## Problems with ConceptNet
 

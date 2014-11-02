@@ -78,6 +78,26 @@ class English extends Language {
       } yield r
     }
 
+    //// Sequencing:
+    //"(.+) (and|then|and then) (.+)" -> {},
+
+    //// Reification:
+    //"there (is|are) (.+)( here)?" -> {},
+    //"there (is|are) (.+) in(side)? (.+)" -> {},
+    //"(.+) (is|are) (.+)" -> {},
+    //"(.+) (is|are) in(side)? (.+)" -> {},
+    //"(.+) (is|are) (here|there)" -> {},
+    //"(.+) (has|have) (.+)" -> {},
+
+    //// Open/close:
+    //"open (.+)" -> {},
+    //"close (.+)" -> {},
+    //
+    //// Questions:
+    //"what (is|are) (.+)" -> {}, // referent could be abstract or realized...
+    //"where (is|are) (.+)" -> {},
+    //"what do(es)? (.+) have" -> {},
+
   ))
 
 
