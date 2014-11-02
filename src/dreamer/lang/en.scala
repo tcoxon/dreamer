@@ -37,7 +37,12 @@ class English extends Language {
       } yield r
     },
 
-    //"go( through)? (.+)" -> {},
+    "go( through)? (.+)" -> {case List(_, x) =>
+      for {
+        xref <- referent(x)
+        r <- fork(goThrough(xref))
+      } yield r;
+    },
     "(go )?([nesw]|north|east|south|west)" -> {case List(_, dir0) =>
       val dir = dir0 match {
         case "n" => "north"; case "e" => "east"; case "s" => "south";

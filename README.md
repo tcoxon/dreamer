@@ -20,7 +20,6 @@ sbt run
 
 ## TODO
 
-* "go door" to go through the door, into another location the door occupies.
 * Referent qualifiers ("the other", "that", "this", "the first", "your", "the \* from/in \*", etc.)
 * Filter conceptnet better: recursive locations, banned concepts, qualified concepts (e.g. your grandmother).
 * Spawn random things when nothing AtLocation here.

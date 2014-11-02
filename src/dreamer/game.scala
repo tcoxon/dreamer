@@ -186,4 +186,24 @@ object Game {
     r <- lookAround
   } yield Edge(Self,Verb("went "+dir+" in"),here) :: r
 
+  def goThrough(portal: Concept): GameAction = portal match {
+    case Self =>
+      for {
+        here <- getLocation
+        _ <- forget(Edge(Self,AtLocation,here))
+        r <- lookAround
+      } yield Edge(Self,Verb("went through"), portal) :: r
+    case _ =>
+      for {
+        otherSides <- reifyingSearch(Question(What,NextTo("through"),portal))
+        val _ = debug("other side: "+otherSides.toString)
+        val _ = assert(otherSides.size == 1)
+        val otherSide = otherSides.head
+        _ <- tell(Edge(portal,NextTo("through"),otherSide))
+        target <- getUp(otherSide)
+        _ <- setLocation(target)
+        r <- lookAround
+      } yield Edge(Self,Verb("went through"), portal) :: r
+  }
+
 }

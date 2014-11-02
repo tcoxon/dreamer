@@ -18,6 +18,7 @@ class EnglishSuite extends FunSuite {
         _ <- tell(Edge(cat,AtLocation,garden))
         _ <- tell(Edge(dog,AtLocation,house))
         _ <- tell(Edge(Self,AtLocation,house))
+        _ <- tell(Edge(Abstract("dog"),AtLocation,Abstract("street")))
       } yield ()
 
   val conv = Conversation(new English)
@@ -101,5 +102,18 @@ class EnglishSuite extends FunSuite {
         assert(result == "I went south in the house. I am in the house. A dog is in it.")
       }
     run(ctx)
+  }
+  test("Going through objects and back puts you where you were.") {
+    def run: State[Context,Unit] =
+      for {
+        _ <- conv.query("look")
+        through1 <- conv.query("go dog")
+        through2 <- conv.query("go dog")
+      } yield {
+        println(through1)
+        println(through2)
+        assert(through1 == "I went through the dog. I am in a street. A dog is in the street.")
+        assert(through2 == "I went through the dog. I am in the house. The dog is in the street.")
+      }
   }
 }
