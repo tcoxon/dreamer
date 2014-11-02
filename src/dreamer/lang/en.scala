@@ -52,7 +52,7 @@ class English extends Language {
       } yield r
     },
 
-    "(drop|put|leave) (.+) in (.+)" -> {case List(_,x,y) =>
+    "(drop|put|leave) (.+) in(side)? (.+)" -> {case List(_,x,_,y) =>
       for {
         xref <- referent(x)
         loc <- (y match {

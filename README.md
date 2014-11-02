@@ -20,9 +20,14 @@ sbt run
 
 ### TODO
 
-1. More GameActions.
-2. Factoring Tells, e.g. "A cat and a dog are the house." Might require
-Collection concepts.
-3. Refine 'it'. Need to avoid "I am in it."
-4. 'Your' qualifier should search inventory.
-5. Rename PastAction relation to Verb.
+* Rename PastAction relation to Verb.
+* Referent qualifiers ("the other", "that", "this", "the first", "your", "the \* from/in \*", etc.)
+* Filter conceptnet better: recursive locations, banned concepts, qualified concepts (e.g. your grandmother).
+* Spawn random things when nothing AtLocation here.
+* More GameActions: reification, open/close, questions (where, what).
+* IsA clarifications: "The dog is a dog, an animal."
+* Doors/portals - objects at two locations? PartOf to add doors?
+* Factoring Tells, e.g. "In the house, there is a cat and a dog." Might require Collection concepts.
+* Refine 'it'. Need to avoid "I am in it." ??
+* NPCs
+* Reality model
