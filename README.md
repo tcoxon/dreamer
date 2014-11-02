@@ -20,8 +20,7 @@ sbt run
 
 ## TODO
 
-* More permanent caching.
-* Ask ConceptNet even if we have one relation that matches a question.
+* Extra specification: make realized objects more specific, e.g. realize a Corgi rather than a generic dog. When searching AtLocation and HasA for that concept, would then have to search the more general type too.
 * Referent qualifiers ("the other", "that", "this", "the first", "your", "the \* from/in \*", etc.)
 * Filter conceptnet better: recursive locations, banned concepts, qualified concepts (e.g. your grandmother).
 * Spawn random things when nothing AtLocation here.
@@ -37,6 +36,6 @@ sbt run
 ## Problems with ConceptNet
 
 * It can be offensive. Unfiltered, it will put gay people in closets and prostitutes in bedrooms.
-* Relations are sometimes reversed (sorry, can't remember the example).
+* Relations are sometimes reversed, e.g. restaurant AtLocation rice
 * No quantifiers - forall, thereexists.
 * Dual-meaning nodes: java IsA island, but java IsA program_language.

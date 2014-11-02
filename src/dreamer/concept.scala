@@ -117,7 +117,7 @@ abstract class EdgeSource {
       }
 
     def search1(mappings: Map[T,Concept], qs: List[Question[T]])
-        : Set[Map[T,Concept]] =
+        : Set[Map[T,Concept]] = {
       qs match {
         case q::qs =>
           for (e <- ask(q);
@@ -129,6 +129,7 @@ abstract class EdgeSource {
         case _ =>
           Set(mappings)
       }
+    }
     
     search1(Map(), List(qs:_*))
   }

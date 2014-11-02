@@ -24,6 +24,7 @@ class ConceptNet(
   type Self = ConceptNet
 
   private var memo = MentalMap()
+  private var alreadyFetched = Set[URL]()
 
   def nameOf(c: Concept): Option[String] = memo.nameOf(c)
   def named(name: String): Option[Concept] = memo.named(name)
@@ -80,7 +81,12 @@ class ConceptNet(
   }
 
   private def fetch[T](q: Question[T]): Set[Edge] = urlFor(q) match {
-    case Some(url) => parseResults(q, fetchURL(url))
+    case Some(url) =>
+      if (alreadyFetched contains url) Set()
+      else {
+        alreadyFetched += url 
+        parseResults(q, fetchURLCached(url))
+      }
     case None => Set()
   }
 
@@ -116,10 +122,7 @@ class ConceptNet(
     }
 
   override def ask[T](q: Question[T]): Set[Edge] = {
-    val cache = memo.ask(q)
-    if (cache == Set()) {
-      fetch(q) foreach (memo += _)
-    }
+    fetch(q) foreach (memo += _)
     memo.ask(q)
   }
 
