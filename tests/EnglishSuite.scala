@@ -80,4 +80,26 @@ class EnglishSuite extends FunSuite {
     run0(ctx)
     run1(ctx)
   }
+  test("Going north in the house should put you in another part of the house") {
+    def run: State[Context,Unit] =
+      for {
+        _ <- conv.query("look")
+        result <- conv.query("go north")
+      } yield {
+        println(result)
+        assert(result == "I went north in the house. I am in a house.")
+      }
+    run(ctx)
+  }
+  test("Going north and then south should put you at the original position") {
+    def run: State[Context,Unit] =
+      for {
+        _ <- conv.query("go north")
+        result <- conv.query("go south")
+      } yield {
+        println(result)
+        assert(result == "I went south in the house. I am in the house. A dog is in it.")
+      }
+    run(ctx)
+  }
 }
