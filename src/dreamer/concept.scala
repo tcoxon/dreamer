@@ -10,6 +10,7 @@ object Relation {
   case object AtLocation extends Relation
   case object HasA extends Relation
   case class Verb(val verb: String) extends Relation
+  case class NextTo(val direction: String) extends Relation
 }
 
 sealed abstract class QFragment[+T] {

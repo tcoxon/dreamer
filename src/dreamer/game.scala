@@ -1,5 +1,6 @@
 package dreamer.game
 import scalaz._, Scalaz._
+import util.Util._
 import util.forked._, ForkedState._
 import dreamer.context._, Context._
 import dreamer.concept._, Concept._, Relation._
@@ -46,6 +47,12 @@ object Game {
   def getUp(place: Concept): State[Context,Concept] =
     locationOf(place)
 
+  def setLocation(place: Concept): State[Context,Unit] = for {
+    here <- getLocation
+    _ <- forget(Edge(Self,AtLocation,here))
+    _ <- tell(Edge(Self,AtLocation,place))
+  } yield ()
+
   implicit def actionToAmbiguousMeaning(action: GameAction): AmbiguousMeaning =
     for {
       edges <- fork(action)
@@ -91,8 +98,7 @@ object Game {
     for {
       here <- getLocation
       up <- getUp(here)
-      _ <- forget(Edge(Self,AtLocation,here))
-      _ <- tell(Edge(Self,AtLocation,up))
+      _ <- setLocation(up)
       r <- lookAround
     } yield Edge(Self,Verb("left"),here) :: r
 
@@ -108,9 +114,7 @@ object Game {
 
   def enter(target: Concept): GameAction =
     for {
-      here <- getLocation
-      _ <- forget(Edge(Self,AtLocation,here))
-      _ <- tell(Edge(Self,AtLocation,target))
+      _ <- setLocation(target)
       r <- lookAround
     } yield Edge(Self,Verb("went into"),target) :: r
 
@@ -170,5 +174,16 @@ object Game {
     } else {
       items.map(x => Edge(Self,HasA,x))
     }
+
+  def goDirection(dir: String, opposite: String): GameAction = for {
+    here <- getLocation
+    inDirs <- reifyingSearch(Question(What,NextTo(dir),here))
+    val _ = debug("inDirs = "+inDirs.toString)
+    val _ = assert(inDirs.size == 1)
+    val inDir = inDirs.head
+    _ <- tell(Edge(here,NextTo(opposite),inDir))
+    _ <- setLocation(inDirs.head)
+    r <- lookAround
+  } yield Edge(Self,Verb("went "+dir+" in"),here) :: r
 
 }

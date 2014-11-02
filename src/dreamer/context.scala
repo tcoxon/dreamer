@@ -107,6 +107,7 @@ object Context {
   private def reificationLimit[T](q: Question[T]) = q match {
     case Question(_, IsA, Variable(_)) => Some(1)
     case Question(_, AtLocation, Variable(_)) => Some(1)
+    case Question(_, NextTo(_), _) => Some(1)
     case _ => None
   }
 
@@ -124,6 +125,14 @@ object Context {
         edge <- ctx.mind.ask(q.assign(mapping.get))
       } yield edge
     
+    // special reification control:
+    def search(ctx: Context, q: Question[T]): Set[Map[T,Concept]] =
+      q match {
+        case Question(Variable(x), NextTo(_), Abstract(y)) =>
+          Set(Map(x -> Abstract(y)))
+        case _ => ctx.mind.search(q)
+      }
+
     def dreamUpResult: (Context,List[Edge]) = {
       debug("Question "+q.toString+" yielded no results")
       val absQ = q.map(archetype(ctx, _))
@@ -131,9 +140,9 @@ object Context {
       val possibilities: List[Map[T,Concept]] = if (extraSpecification) {
         val absQ2 = q.map(qf => superkind(ctx, archetype(ctx, qf)))
         debug("  Even more abstract question: "+absQ2.toString)
-        (ctx.mind.search(absQ) | ctx.mind.search(absQ2)).toList
+        (search(ctx, absQ) | search(ctx, absQ2)).toList
       } else {
-        ctx.mind.search(absQ).toList
+        search(ctx, absQ).toList
       }
       debug("  Yielded "+possibilities.size+" results")
 

@@ -30,11 +30,25 @@ class English extends Language {
       } yield r
     },
 
-    "(enter|go( into)?) (.+)" -> {case List(_, _, x) =>
+    "(enter|go into) (.+)" -> {case List(_, x) =>
       for {
         xref <- referent(x)
         r <- fork(enter(xref))
       } yield r
+    },
+
+    //"go( through)? (.+)" -> {},
+    "(go )?([nesw]|north|east|south|west)" -> {case List(_, dir0) =>
+      val dir = dir0 match {
+        case "n" => "north"; case "e" => "east"; case "s" => "south";
+        case "w" => "west"; case _ => dir0 }
+      val opposite = dir match {
+        case "north" => "south"
+        case "east" => "west"
+        case "south" => "north"
+        case "west" => "east"
+      }
+      for (r <- fork(goDirection(dir, opposite))) yield r
     },
 
     "(take|grab) (.+)" -> {case List(_, x) =>
@@ -97,6 +111,9 @@ class English extends Language {
     //"what (is|are) (.+)" -> {}, // referent could be abstract or realized...
     //"where (is|are) (.+)" -> {},
     //"what do(es)? (.+) have" -> {},
+    //
+    //// Miscellaneous
+    //"h(elp)?( (.*))?" -> {}
 
   ))
 
@@ -193,6 +210,10 @@ class English extends Language {
         case _ => "has"
       }
       case Verb(verb) => verb
+      case NextTo(dir) => subj match {
+        case Self => "am in the "+dir+" of"
+        case _ => "is in the "+dir+" of"
+      }
     }) + " "
 
   private def describeSVO(edge: Edge): State[Context,String] =

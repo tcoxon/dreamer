@@ -44,6 +44,7 @@ class ConceptNet(
     case AtLocation => Some("/r/AtLocation")
     case HasA => Some("/r/HasA")
     case Verb(_) => None
+    case NextTo(_) => None
   }
   private def getRelation(uri: String) = uri match {
     case "/r/IsA" => Some(IsA)
