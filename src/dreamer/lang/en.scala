@@ -37,12 +37,20 @@ class English extends Language {
       } yield r
     },
 
-    "go( through)? (.+)" -> {case List(_, x) =>
+    "go through (.+)" -> {case List(x) =>
       for {
         xref <- referent(x)
-        r <- fork(goThrough(xref))
-      } yield r;
+        r <- fork(goThrough(xref, Verb("went through")))
+      } yield r
     },
+
+    "ride (.+)" -> {case List(x) =>
+      for {
+        xref <- referent(x)
+        r <- fork(goThrough(xref, Verb("rode")))
+      } yield r
+    },
+
     "(go )?([nesw]|north|east|south|west)" -> {case List(_, dir0) =>
       val dir = dir0 match {
         case "n" => "north"; case "e" => "east"; case "s" => "south";
@@ -54,6 +62,22 @@ class English extends Language {
         case "west" => "east"
       }
       for (r <- fork(goDirection(dir, opposite))) yield r
+    },
+    
+    "go" -> {case _ => forked(Clarify(
+          "go into (enter) <thing>" ::
+          "go through (ride) <thing>" ::
+          "go n|s|e|w" :: Nil))},
+
+    "go (.+)" -> {case List(x) =>
+      // Ambiguous use of go - go nesw / go through / go into?
+      for {
+        xref <- referent(x)
+        desc <- fork(describe(xref, ObjectPos))
+      } yield Clarify(
+          "go into (enter) "+desc ::
+          "go through (ride) "+desc ::
+          "go n|s|e|w" :: Nil)
     },
 
     "(take|grab) (.+)" -> {case List(_, x) =>
@@ -250,10 +274,20 @@ class English extends Language {
       }): State[Context,List[String]]
   } yield r
 
+  def describeList(conj: String, elems: List[String]): String = elems match {
+    case x1 :: x2 :: Nil => x1 + " or " + x2
+    case x1 :: x2 :: xs => x1 + ", " + describeList(conj, x2 :: xs)
+    case x :: Nil => x
+    case Nil => ""
+  }
+
   def describe(response: Response): State[Context,String] = response match {
     case Ack => state("OK.")
     case Tell(es) => for (descs <- describe(es)) yield descs.mkString(" ")
-    case Clarify() => state("Can you clarify that?")
+    case Clarify(options) => state("Can you clarify that?" + (options match {
+      case Nil => ""
+      case _ => " Did you mean "+describeList("or", options.map("\""+_+"\""))+"?"
+    }))
     case ParseFailure() => state("I don't understand.")
   }
 

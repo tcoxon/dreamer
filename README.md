@@ -25,7 +25,6 @@ sbt run
 * Spawn random things when nothing AtLocation here.
 * More GameActions: reification, open/close, questions (where, what).
 * IsA clarifications: "The dog is a dog, an animal."
-* Doors/portals - objects at two locations? PartOf to add doors?
 * Factoring Tells, e.g. "In the house, there is a cat and a dog." Might require Collection concepts.
 * Refine 'it'. Need to avoid "I am in it." ??
 * NPCs

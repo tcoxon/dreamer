@@ -17,7 +17,7 @@ object Language {
 
   sealed abstract class Response
   case class Tell(val edges: List[Edge]) extends Response
-  case class Clarify(/*TODO possibility list*/) extends Response
+  case class Clarify(val options: List[String]) extends Response
   case class ParseFailure(/*TODO extra info*/) extends Response
   val Ack = Tell(Nil)
 }
@@ -57,7 +57,7 @@ trait Language {
 
   private def clarify(ambiguity: List[(Context,Response)]): SpecificMeaning =
     state(if (ambiguity.size == 0) ParseFailure(/*TODO*/)
-      else Clarify(/*TODO*/))
+      else Clarify(Nil))
 
   def parseSpecific(text: String): SpecificMeaning =
     join(clarify)(parse(text))
