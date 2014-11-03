@@ -13,6 +13,10 @@ private object ConceptNet {
   val defaultTimeout = 20l
   val defaultMinWeight = 2.0
   val defaultMaxResults = 50
+
+  val specials = Question(What,IsA,Thing) ::
+                 Question(What,IsA,Place) :: Nil
+  val specialMax = 500
 }
 
 class ConceptNet(
@@ -53,10 +57,10 @@ class ConceptNet(
     case _ => None
   }
 
-  private def urlFor(start: String, rel: String, end: String): URL = {
+  private def urlFor(start: String, rel: String, end: String, max: Int): URL = {
     val search = baseURL + "/search?" +
         "minWeight=" + minWeight.toString +
-        "&limit=" + maxResults.toString + "&"
+        "&limit=" + max.toString + "&"
     val kvs = Array("start" -> start, "rel" -> rel, "end" -> end)
     new URL(search + (for ((k,v) <- kvs; if v != "-")
                         yield k+"="+uriEncode(v)).mkString("&"))
@@ -69,10 +73,13 @@ class ConceptNet(
     val relUri = getRelationUri(rel)
     val endUri = getConceptUri(end)
 
+    val max = if (ConceptNet.specials contains q) ConceptNet.specialMax
+              else maxResults
+
     for (start <- startUri;
          rel <- relUri;
          end <- endUri)
-      yield urlFor(start, rel, end)
+      yield urlFor(start, rel, end, max)
   }
 
   private def fragmentMatches[T](qf: QFragment[T], uri: String) = qf match {
