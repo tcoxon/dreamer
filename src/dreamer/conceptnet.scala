@@ -17,6 +17,42 @@ private object ConceptNet {
   val specials = Question(What,IsA,Thing) ::
                  Question(What,IsA,Place) :: Nil
   val specialMax = 500
+
+  val bannedWords =
+        // offensive
+        "prostitute" ::
+        "hooker" ::
+        "period" ::
+        "breast" ::
+        "jew" ::
+        "nigger" ::
+        "gay person" ::
+        // way too generic
+        "something" ::
+        "someone" ::
+        "area" ::
+        Nil
+
+  val badPrefixes =
+        "the " ::
+        "a " ::
+        "any " ::
+        "your " ::
+        "my " ::
+        "on " ::
+        "one " :: "two " :: "three " :: "four " :: "five " ::
+        "six " :: "seven " :: "eight " :: "nine " :: "ten " ::
+        (0 until 9).map(_.toString).toList
+
+  def filter(edges: List[Map[String,Any]]): List[Map[String,Any]] = for {
+    e <- edges
+    val start = e.get("startLemmas").asInstanceOf[Option[String]]
+    if start.isEmpty || (!bannedWords.contains(start.get) &&
+        badPrefixes.find(start.get.startsWith(_)).isEmpty)
+    val end = e.get("endLemmas").asInstanceOf[Option[String]]
+    if end.isEmpty || (!bannedWords.contains(end.get) &&
+        badPrefixes.find(end.get.startsWith(_)).isEmpty)
+  } yield e
 }
 
 class ConceptNet(
@@ -103,7 +139,8 @@ class ConceptNet(
     JSON.parseFull(json) match {
       case Some(obj) =>
         obj.asInstanceOf[Map[String,List[Map[String,Any]]]].get("edges") match {
-          case Some(edges) =>
+          case Some(edges0) =>
+            val edges = ConceptNet.filter(edges0)
             def nameNode(nodeKey: String, lemmaKey: String) {
               for (edge <- edges;
                    node <- edge.get(nodeKey).asInstanceOf[Option[String]];
@@ -115,7 +152,7 @@ class ConceptNet(
             }
             nameNode("start", "startLemmas")
             nameNode("end", "endLemmas")
-            (for (edge <- edges;
+            val parsedEdges = (for (edge <- edges;
                   relStr <- edge.get("rel");
                   rel <- getRelation(relStr.toString);
                   start <- edge.get("start");
@@ -123,7 +160,12 @@ class ConceptNet(
                   if fragmentMatches(q.start, start.toString) &&
                       fragmentMatches(q.end, end.toString))
               yield Edge(Abstract(start.toString), rel,
-                         Abstract(end.toString))).toSet
+                         Abstract(end.toString)))
+            parsedEdges.filter(
+                _ match {
+                  case Edge(x,_,y) => x != y
+                  case _ => true
+                }).toSet
           case None => Set()
         }
       case _ => Set()

@@ -21,7 +21,6 @@ sbt run
 ## TODO
 
 * Referent qualifiers ("the other", "that", "this", "the first", "your", "the \* from/in \*", etc.)
-* Filter conceptnet better: recursive locations, banned concepts, qualified concepts (e.g. your grandmother).
 * Spawn random things when nothing AtLocation here.
 * More GameActions: reification, open/close, questions (where, what).
 * IsA clarifications: "The dog is a dog, an animal."
