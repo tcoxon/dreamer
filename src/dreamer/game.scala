@@ -184,7 +184,7 @@ object Game {
     _ <- tell(Edge(here,NextTo(opposite),inDir))
     _ <- setLocation(inDirs.head)
     r <- lookAround
-  } yield Edge(Self,Verb("went "+dir+" in"),here) :: r
+  } yield Edge(Self,Verb("went "+dir+" in"),inDir) :: r
 
   def goThrough(portal: Concept, verb: Verb): GameAction = portal match {
     case Self =>
@@ -203,7 +203,7 @@ object Game {
         target <- getUp(otherSide)
         _ <- setLocation(target)
         r <- lookAround
-      } yield Edge(Self,verb, portal) :: r
+      } yield Edge(Self, verb, otherSide) :: r
   }
 
 }
