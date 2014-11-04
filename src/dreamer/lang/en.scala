@@ -300,7 +300,7 @@ class English extends Language {
       case Nil => ""
       case _ => " Did you mean "+describeList("or", options.map("\""+_+"\""))+"?"
     }))
-    case ParseFailure() => state("I don't understand.")
+    case ParseFailure() => state("I don't understand. Try rephrasing.")
     case MultiResponse(resps) =>
       val describers = resps.map(describe)
       def folder(ctxacc: (Context,String), descr: State[Context,String]) = {
