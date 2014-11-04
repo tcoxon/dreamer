@@ -78,9 +78,24 @@ object Game {
   def lookAround: GameAction =
     for {
       here <- getLocation
-      things <- reifyingSearch(Question(What, AtLocation, here))
+      things0 <- reifyingSearch(Question(What, AtLocation, here))
+      val things1 = things0.filter(_!=Self)
+      val things2 =
+          if (things1.size == 0) List(Nothingness)
+          else things1
     } yield Edge(Self,AtLocation,here) ::
-        things.filter(_ != Self).map(Edge(_,AtLocation,here))
+        things2.map(Edge(_,AtLocation,here))
+
+  def lookAroundNoSelf: GameAction =
+    // do the same as lookAround, but without referencing Self.
+    for {
+      r <- lookAround
+    } yield {
+      r.filter(e => e match {
+        case Edge(Self,AtLocation,_) => false
+        case _ => true
+      })
+    }
 
 
   def lookAt(x: Concept): GameAction =
@@ -115,7 +130,7 @@ object Game {
   def enter(target: Concept): GameAction =
     for {
       _ <- setLocation(target)
-      r <- lookAround
+      r <- lookAroundNoSelf
     } yield Edge(Self,Verb("went into"),target) :: r
 
   def take(item: Concept): GameAction =
@@ -183,7 +198,7 @@ object Game {
     val inDir = inDirs.head
     _ <- tell(Edge(here,NextTo(opposite),inDir))
     _ <- setLocation(inDirs.head)
-    r <- lookAround
+    r <- lookAroundNoSelf
   } yield Edge(Self,Verb("went "+dir+" in"),inDir) :: r
 
   def goThrough(portal: Concept, verb: Verb): GameAction = portal match {

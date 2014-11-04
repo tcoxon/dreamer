@@ -125,12 +125,10 @@ class English extends Language {
     "(.+?)(\\.|,| and| then) (.+)" -> {case List(x,_,y) =>
       for {
         xr <- parse(x)
-        _ <- fork(describe(xr))
         yr <- parse(y)
-        _ <- fork(describe(yr))
       } yield MultiResponse(List(xr,yr))
     },
-    "then (.+)" -> {case List(x) => parse(x)}
+    "(then|and) (.+)" -> {case List(_,x) => parse(x)}
 
     //// Reification:
     //"there (is|are) (.+)( here)?" -> {},

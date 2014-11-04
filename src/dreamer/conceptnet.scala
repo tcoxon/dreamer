@@ -35,13 +35,8 @@ private object ConceptNet {
         Nil
 
   val badPrefixes =
-        "the " ::
-        "a " ::
-        "any " ::
-        "your " ::
-        "my " ::
-        "on " ::
-        "in " ::
+        "the " :: "a " :: "any " :: "your " :: "my " :: "on " ::
+        "in " :: "at " ::
         "sex " ::
         "one " :: "two " :: "three " :: "four " :: "five " ::
         "six " :: "seven " :: "eight " :: "nine " :: "ten " ::
