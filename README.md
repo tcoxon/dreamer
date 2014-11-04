@@ -27,7 +27,6 @@ sbt run
 * NPCs
 * Reality model
 * Asking clarification: what, which
-* Bug: realized HasA's don't have an AtLocation!
 * Enhancement? Add a "weird" adjective to objects spawned via dreamWeirdDefaults
 
 ## Problems with ConceptNet

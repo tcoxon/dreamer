@@ -142,6 +142,13 @@ object Context {
         case _ => List()
       }
 
+    def extendRealizations(e: Edge): List[Edge] =
+      // Produce extra edges that must also exist for the new edge to be valid
+      e match {
+        case Edge(x,HasA,y) => Edge(y,AtLocation,x) :: e :: Nil
+        case _ => e :: Nil
+      }
+
     def dreamUpResult: (Context,List[Edge]) = {
       debug("Question "+q.toString+" yielded no results")
       val absQ = q.map(archetype(ctx, _))
@@ -160,9 +167,9 @@ object Context {
           else possibilities0
 
       // reify a random subset of them
-      val count = Math.max((if (weird) 2 else reificationLimit(q) match {
+      val count = math.max((if (weird) 2 else reificationLimit(q) match {
         case Some(1) => 1
-        case Some(x) => Math.max(0, ctx.r.nextInt(x-2) + 2)
+        case Some(x) => math.max(0, ctx.r.nextInt(x-2) + 2)
         case None => ctx.r.nextInt(4) + 2
       }) - current.size, 0)
       debug("  Reifying "+count)
@@ -180,7 +187,7 @@ object Context {
             for (abs <- mapping.get(t); real <- reifyMap.get(abs))
               yield real)
           val mind1 = edge match {
-            case Some(e) => mind+e
+            case Some(e) => extendRealizations(e).foldLeft(mind)((a,b)=>a+b)
             case _ => mind
           }
           (ctx1.copy(mind=mind1), edge match {
