@@ -98,6 +98,7 @@ class English extends Language {
     "(drop|put|leave) (.+) in(side)? (.+)" -> {case List(_,x,_,y) =>
       for {
         xref <- referent(x)
+        _ <- fork(setIt(xref))
         loc <- (y match {
             case "here" => fork(getLocation)
             case "there" => getIt
@@ -110,6 +111,7 @@ class English extends Language {
     "give (.+) to (.+)" -> {case List(x,y) =>
       for {
         xref <- referent(x)
+        _ <- fork(setIt(xref))
         yref <- referent(y)
         r <- fork(give(xref,yref))
       } yield r
@@ -125,6 +127,13 @@ class English extends Language {
     "(.+?)(\\.|,| and| then) (.+)" -> {case List(x,_,y) =>
       for {
         xr <- parse(x)
+
+        // get the 'it' that would be referred to by describing xr
+        ctx:Context <- fget
+        val it = describe(xr)(ctx)._1.it
+        _ <- if (it.isEmpty) forked[Context,Unit](())
+              else fork(setIt(it.get.real))
+
         yr <- parse(y)
       } yield MultiResponse(List(xr,yr))
     },

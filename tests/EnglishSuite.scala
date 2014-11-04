@@ -88,7 +88,7 @@ class EnglishSuite extends FunSuite {
         result <- conv.query("go north")
       } yield {
         println(result)
-        assert(result == "I went north in the house. I am in a house.")
+        assert(result == "I went north in a house. I am in the house.")
       }
     run(ctx)
   }
@@ -112,7 +112,7 @@ class EnglishSuite extends FunSuite {
       } yield {
         println(through1)
         println(through2)
-        assert(through1 == "I went through the dog. I am in a street. A dog is in the street.")
+        assert(through1 == "I went through a dog. I am in a street. A dog is in the street.")
         assert(through2 == "I went through the dog. I am in the house. The dog is in the street.")
       }
   }

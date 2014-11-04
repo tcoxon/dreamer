@@ -11,7 +11,7 @@ import util.Util._
 private object ConceptNet {
   val defaultBaseURL = "http://conceptnet5.media.mit.edu/data/5.2"
   val defaultTimeout = 20l
-  val defaultMinWeight = 2.0
+  val defaultMinWeight = 1.0
   val defaultMaxResults = 50
 
   val specials = Question(What,IsA,Thing) ::
@@ -27,11 +27,12 @@ private object ConceptNet {
         "jew" ::
         "nigger" ::
         "gay person" ::
+        "sex" ::
         // way too generic
         "something" ::
         "someone" ::
         "area" ::
-        "sex" ::
+        "there" ::
         Nil
 
   val badPrefixes =
