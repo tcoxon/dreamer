@@ -29,10 +29,8 @@ private object ConceptNet {
         "gay person" ::
         "sex" ::
         // way too generic
-        "something" ::
-        "someone" ::
-        "area" ::
-        "there" ::
+        "something" :: "someone" :: "area" ::
+        "there" :: "this" ::
         Nil
 
   val badPrefixes =
