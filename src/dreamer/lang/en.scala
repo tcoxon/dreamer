@@ -30,7 +30,7 @@ class English extends Language {
       } yield r
     },
 
-    "(enter|go into) (.+)" -> {case List(_, x) =>
+    "(enter|go into|go inside) (.+)" -> {case List(_, x) =>
       for {
         xref <- referent(x)
         r <- fork(enter(xref))

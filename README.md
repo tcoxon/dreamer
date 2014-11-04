@@ -24,7 +24,6 @@ sbt run
 * More GameActions: reification, open/close, questions (where, what).
 * IsA clarifications: "The dog is a dog, an animal."
 * Factoring Tells, e.g. "In the house, there is a cat and a dog." Might require Collection concepts.
-* Refine 'it'. Need to avoid "I am in it." ??
 * NPCs
 * Reality model
 * Asking clarification: what, which
