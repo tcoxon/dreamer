@@ -19,6 +19,7 @@ object Language {
   case class Tell(val edges: List[Edge]) extends Response
   case class Clarify(val options: List[String]) extends Response
   case class ParseFailure(/*TODO extra info*/) extends Response
+  case class MultiResponse(val resps: List[Response]) extends Response
   val Ack = Tell(Nil)
 }
 
@@ -32,13 +33,11 @@ trait Language {
 
   def describe(concept: Concept, pos: NounPos): State[Context,String]
 
-  // Common to all language implementations:
-  protected val OK_CHARS = ' ' +: '\'' +: '/' +:
-      (('a' to 'z') ++ ('A' to 'Z') ++ ('0' to '9'))
-
-  protected def normalizeInput(text: String) =
-    "\\s+".r.replaceAllIn(text.trim()," ").
-        filter(OK_CHARS contains _).toLowerCase()
+  protected def normalizeInput(text: String) = {
+    val t1 = "\\s+".r.replaceAllIn(text.trim()," ").toLowerCase()
+    if (t1.endsWith(".")) t1.substring(0,t1.length-1).trim()
+      else t1
+  }
 
   // Returns all possible meanings
   def parse(text: String): AmbiguousMeaning = {

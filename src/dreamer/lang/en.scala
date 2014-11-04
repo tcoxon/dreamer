@@ -119,10 +119,18 @@ class English extends Language {
       for { 
         r <- invent
       } yield r
-    }
+    },
 
-    //// Sequencing:
-    //"(.+) (and|then|and then) (.+)" -> {},
+    // Sequencing:
+    "(.+?)(\\.|,| and| then) (.+)" -> {case List(x,_,y) =>
+      for {
+        xr <- parse(x)
+        _ <- fork(describe(xr))
+        yr <- parse(y)
+        _ <- fork(describe(yr))
+      } yield MultiResponse(List(xr,yr))
+    },
+    "then (.+)" -> {case List(x) => parse(x)}
 
     //// Reification:
     //"there (is|are) (.+)( here)?" -> {},
@@ -295,6 +303,18 @@ class English extends Language {
       case _ => " Did you mean "+describeList("or", options.map("\""+_+"\""))+"?"
     }))
     case ParseFailure() => state("I don't understand.")
+    case MultiResponse(resps) =>
+      val describers = resps.map(describe)
+      def folder(ctxacc: (Context,String), descr: State[Context,String]) = {
+        val (ctx,acc) = ctxacc
+        val (ctx1, desc) = descr(ctx)
+        (ctx1, acc+" "+desc)
+      }
+      for {
+        ctx:Context <- get
+        val (ctx1, desc) = describers.foldLeft((ctx,""))(folder)
+        _ <- put(ctx1)
+      } yield desc.trim()
   }
 
 }
