@@ -151,8 +151,9 @@ class English extends Language {
     case "you" => forked(Self)
     case "yourself" => forked(Self)
     case "it" => for (x <- getIt) yield x
+    case "itself" => for (x <- getIt) yield x
     case _ =>
-      val qualStripped = "(a|an|the) ".r.replaceAllIn(text, "")
+      val qualStripped = "^(a|an|the) ".r.replaceAllIn(text, "")
       for {
         ctx:Context <- fget
         val namedCOpt = ctx.mind.named(qualStripped)
@@ -245,14 +246,19 @@ class English extends Language {
       }
     }) + " "
 
-  private def describeSVO(edge: Edge): State[Context,String] =
-    for {
-      sdesc <- describe(edge.start, SubjectPos)
-      odesc <- describe(edge.end, ObjectPos)
-      _ <- ref(edge.start)
-      _ <- ref(edge.end)
-      _ <- setIt(if (edge.start == Self) edge.end else edge.start)
-    } yield sdesc + describeV(edge.start, edge.rel) + odesc
+  private def describeSVO(edge: Edge): State[Context,String] = edge match {
+    case Edge(Self,rel,Self) => state("I"+describeV(Self,rel)+"myself")
+    case _ =>
+      for {
+        sdesc <- describe(edge.start, SubjectPos)
+        _ <- ref(edge.start)
+        _ <- setIt(edge.start)
+        odesc <- if (edge.start == edge.end) state[Context,String]("itself")
+                  else describe(edge.end, ObjectPos)
+        _ <- ref(edge.end)
+        _ <- setIt(if (edge.start == Self) edge.end else edge.start)
+      } yield sdesc + describeV(edge.start, edge.rel) + odesc
+  }
 
   def describe(edge: Edge): State[Context,String] = edge match {
     case Edge(_, rel, _) =>
