@@ -31,6 +31,7 @@ private object ConceptNet {
         "something" ::
         "someone" ::
         "area" ::
+        "sex" ::
         Nil
 
   val badPrefixes =
@@ -40,6 +41,7 @@ private object ConceptNet {
         "your " ::
         "my " ::
         "on " ::
+        "sex " ::
         "one " :: "two " :: "three " :: "four " :: "five " ::
         "six " :: "seven " :: "eight " :: "nine " :: "ten " ::
         (0 until 9).map(_.toString).toList

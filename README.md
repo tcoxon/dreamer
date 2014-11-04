@@ -21,7 +21,6 @@ sbt run
 ## TODO
 
 * Referent qualifiers ("the other", "that", "this", "the first", "your", "the \* from/in \*", etc.)
-* Spawn random things when nothing AtLocation here.
 * More GameActions: reification, open/close, questions (where, what).
 * IsA clarifications: "The dog is a dog, an animal."
 * Factoring Tells, e.g. "In the house, there is a cat and a dog." Might require Collection concepts.
@@ -30,6 +29,7 @@ sbt run
 * Reality model
 * Asking clarification: what, which
 * Bug: realized HasA's don't have an AtLocation!
+* Enhancement? Add a "weird" adjective to objects spawned via dreamWeirdDefaults
 
 ## Problems with ConceptNet
 

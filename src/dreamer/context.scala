@@ -133,25 +133,38 @@ object Context {
         case _ => ctx.mind.search(q)
       }
 
+    def dreamWeirdDefaults(ctx: Context, q: Question[T]): List[Map[T,Concept]] =
+      // Called if there are no example AtLocations for somewhere.
+      // We return random Things to fill the empty space.
+      q match {
+        case Question(Variable(x), AtLocation, _) =>
+          ctx.mind.search(Question(Variable(x), IsA, Thing)).toList
+        case _ => List()
+      }
+
     def dreamUpResult: (Context,List[Edge]) = {
       debug("Question "+q.toString+" yielded no results")
       val absQ = q.map(archetype(ctx, _))
       debug("  Abstracted question: "+absQ.toString)
-      val possibilities: List[Map[T,Concept]] = if (extraSpecification) {
+      val possibilities0: List[Map[T,Concept]] = if (extraSpecification) {
         val absQ2 = q.map(qf => superkind(ctx, archetype(ctx, qf)))
         debug("  Even more abstract question: "+absQ2.toString)
         (search(ctx, absQ) | search(ctx, absQ2)).toList
       } else {
         search(ctx, absQ).toList
       }
-      debug("  Yielded "+possibilities.size+" results")
+      debug("  Yielded "+possibilities0.size+" results")
+
+      val weird = possibilities0.size == 0 && ctx.r.nextBoolean
+      val possibilities = if (weird) dreamWeirdDefaults(ctx, absQ)
+          else possibilities0
 
       // reify a random subset of them
-      val count = reificationLimit(q) match {
+      val count = Math.max((if (weird) 2 else reificationLimit(q) match {
         case Some(1) => 1
-        case Some(x) => ctx.r.nextInt(x-1) + 1
-        case None => ctx.r.nextInt(5) + 1
-      }
+        case Some(x) => Math.max(0, ctx.r.nextInt(x-2) + 2)
+        case None => ctx.r.nextInt(4) + 2
+      }) - current.size, 0)
       debug("  Reifying "+count)
       val archetypes: List[Map[T,Concept]] =
               ctx.r.shuffle(possibilities).take(count)
