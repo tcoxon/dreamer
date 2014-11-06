@@ -153,8 +153,14 @@ class English extends Language {
         loc <- referent(y)
         r <- fork(reifyThereIs(xr, loc))
       } yield r
+    },
+    "in(side)? (.+) (is|are) (.+)" -> {case List(_,locStr,_,concept) =>
+      for {
+        x <- abstractReferent(concept)
+        loc <- referent(locStr)
+        r <- fork(reifyThereIs(x, loc))
+      } yield r
     }
-    //"in(side)? (.+) (is|are) (.+)" -> {},
     //"(.+) (is|are) (.+)" -> {},
     //"(.+) (is|are) in(side)? (.+)" -> {},
     //"(.+) (is|are) (here|there)" -> {},
