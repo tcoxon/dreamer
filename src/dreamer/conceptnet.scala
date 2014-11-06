@@ -64,7 +64,11 @@ class ConceptNet(
   private var alreadyFetched = Set[URL]()
 
   def nameOf(c: Concept): Option[String] = memo.nameOf(c)
-  def named(name: String): Option[Concept] = memo.named(name)
+  def named(name: String): Option[Concept] = memo.named(name) orElse {
+    val url = new URL(baseURL + "/search?text=" + uriEncode(name))
+    fetch(url) foreach (memo += _)
+    memo.named(name)
+  }
   def name(c: Concept, name: String): ConceptNet = {
     // yuck impure
     memo = memo.name(c, name)
@@ -115,24 +119,22 @@ class ConceptNet(
       yield urlFor(start, rel, end, max)
   }
 
-  private def fragmentMatches[T](qf: QFragment[T], uri: String) = qf match {
-    case Abstract(x) => x == uri
-    case Variable(_) => true
-    case _ => false
+  private def fetch[T](url: URL): Set[Edge] = {
+    if (alreadyFetched contains url) Set()
+    else {
+      val r = parseResults(fetchURLCached(url))
+      alreadyFetched += url 
+      r
+    }
   }
 
   private def fetch[T](q: Question[T]): Set[Edge] = urlFor(q) match {
-    case Some(url) =>
-      if (alreadyFetched contains url) Set()
-      else {
-        alreadyFetched += url 
-        parseResults(q, fetchURLCached(url))
-      }
+    case Some(url) => fetch(url)
     case None => Set()
   }
 
   // The following functions are gross impure monsters.
-  private def parseResults[T](q: Question[T], json: String): Set[Edge] =
+  private def parseResults[T](json: String): Set[Edge] =
     JSON.parseFull(json) match {
       case Some(obj) =>
         obj.asInstanceOf[Map[String,List[Map[String,Any]]]].get("edges") match {
@@ -153,9 +155,7 @@ class ConceptNet(
                   relStr <- edge.get("rel");
                   rel <- getRelation(relStr.toString);
                   start <- edge.get("start");
-                  end <- edge.get("end");
-                  if fragmentMatches(q.start, start.toString) &&
-                      fragmentMatches(q.end, end.toString))
+                  end <- edge.get("end"))
               yield Edge(Abstract(start.toString), rel,
                          Abstract(end.toString)))
             parsedEdges.filter(

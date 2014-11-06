@@ -137,11 +137,18 @@ class English extends Language {
         yr <- parse(y)
       } yield MultiResponse(List(xr,yr))
     },
-    "(then|and) (.+)" -> {case List(_,x) => parse(x)}
+    "(then|and) (.+)" -> {case List(_,x) => parse(x)},
 
-    //// Reification:
-    //"there (is|are) (.+)( here)?" -> {},
+    // Reification:
+    "there (is|are) (.+?)( here)?" -> {case List(_,x,_) =>
+      for {
+        xr <- abstractReferent(x)
+        here <- fork(getLocation)
+        r <- fork(reifyThereIs(xr, here))
+      } yield r
+    }
     //"there (is|are) (.+) in(side)? (.+)" -> {},
+    //"in(side)? (.+) (is|are) (.+)" -> {},
     //"(.+) (is|are) (.+)" -> {},
     //"(.+) (is|are) in(side)? (.+)" -> {},
     //"(.+) (is|are) (here|there)" -> {},
@@ -161,6 +168,18 @@ class English extends Language {
 
   ))
 
+
+  def abstractReferent(text: String): ForkedState[Context,Concept] = for {
+    stripped <-
+        (if (text.startsWith("a ")) forked(text.substring(2))
+        else if (text.startsWith("an ")) forked(text.substring(3))
+        else if (text.endsWith("s"))
+           fork(List(text.substring(0,text.length-1), text))
+        else forked(text)): ForkedState[Context,String]
+    ctx:Context <- fget
+    val maybeArche = ctx.mind.named(stripped)
+    _ <- continueIf(!maybeArche.isEmpty)
+  } yield maybeArche.get
 
   def referent(text: String): ForkedState[Context,Concept] = text match {
     case "you" => forked(Self)

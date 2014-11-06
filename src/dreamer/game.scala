@@ -221,4 +221,9 @@ object Game {
       } yield Edge(Self, verb, otherSide) :: r
   }
 
+  def reifyThereIs(archetype: Concept, location: Concept): GameAction = for {
+    real <- reify(archetype)
+    _ <- tell(Edge(real,AtLocation,location))
+  } yield Edge(real,AtLocation,location) :: Nil
+
 }

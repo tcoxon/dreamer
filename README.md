@@ -36,3 +36,4 @@ sbt run
 * No quantifiers - forall, thereexists.
 * Dual-meaning nodes: java IsA island, but java IsA program_language.
 * Lack of easily queriable transitivity.
+* HasA relationship isn't always between nouns, e.g. "The old person has a so much to teach us."
