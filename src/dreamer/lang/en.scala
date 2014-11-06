@@ -146,8 +146,14 @@ class English extends Language {
         here <- fork(getLocation)
         r <- fork(reifyThereIs(xr, here))
       } yield r
+    },
+    "there (is|are) (.+) in(side)? (.+)" -> {case List(_,x,_,y) =>
+      for {
+        xr <- abstractReferent(x)
+        loc <- referent(y)
+        r <- fork(reifyThereIs(xr, loc))
+      } yield r
     }
-    //"there (is|are) (.+) in(side)? (.+)" -> {},
     //"in(side)? (.+) (is|are) (.+)" -> {},
     //"(.+) (is|are) (.+)" -> {},
     //"(.+) (is|are) in(side)? (.+)" -> {},
