@@ -101,6 +101,9 @@ object Context {
   def searchWhat(qs: Question[Unit]*): State[Context,List[Concept]] =
     State{ctx => (ctx, ctx.mind.searchWhat(qs:_*).toList)}
 
+  def isAwake(ctx: Context): Boolean =
+    !ctx.mind.ask(Question(Self,HasState,Awake)).isEmpty
+
   // Sometimes you can only reify one answer: e.g. if you ask where a house is
   // we want only one answer: street. Otherwise we could leave a house and
   // the dreamer would be in multiple locations
@@ -201,7 +204,7 @@ object Context {
       case Some(x) => x-1
       case None => 2
     }
-    if (current.size > min) {
+    if (current.size > min || isAwake(ctx)) {
       (ctx, defaultResult)
     } else q match {
       case Question(Realized(_), _, _) =>

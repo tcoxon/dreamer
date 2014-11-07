@@ -35,6 +35,7 @@ object Concept {
   val Thing = Abstract("/c/en/thing")
   val Place = Abstract("/c/en/place")
   val Nothingness = Abstract("/c/en/nothing")
+  val Unknown = Abstract("/c/en/unknown")
 
   val DreamerGame = Abstract("/c/en/dreamer_game")
 

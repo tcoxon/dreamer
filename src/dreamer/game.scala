@@ -23,9 +23,13 @@ object Game {
   def locationOf(x: Concept): State[Context,Concept] = {
     for {
       heres <- reifyingSearch(Question(x,AtLocation,What))
+      ctx <- get
       here <- (heres match {
-          case Nil => for {
+          case Nil =>
+            if (isAwake(ctx)) state(Unknown)
+            else for {
               place <- createPlace
+              val _ = debug("Forcing a location for locationOf: "+place)
               _ <- tell(Edge(x,AtLocation,place))
             } yield place
           case h :: Nil => state(h)

@@ -374,7 +374,7 @@ class English extends Language {
   }
 
   def describeState(c: Concept): State[Context,String] = c match {
-    case Sleeping => state("sleeping")
+    case Sleeping => state("dreaming")
     case Awake => state("awake")
     case Open => state("open")
     case Closed => state("closed")
@@ -391,7 +391,15 @@ class English extends Language {
   } yield sdesc + describeV(edge.start, edge.rel) + odesc
 
   def describe(edge: Edge): State[Context,String] = edge match {
+    case Edge(c, IsA, Unknown) if c != Nothingness =>
+      for (desc <- describe(c, SubjectPos))
+        yield "I don't know what "+desc+" "+describeV(c,IsA).trim()
+    case Edge(c, AtLocation, Unknown) if c != Nothingness =>
+      for (desc <- describe(c, SubjectPos))
+        yield "I don't know where "+desc+" "+describeV(c,IsA).trim()
+
     case Edge(_, HasState, _) => describeHasState(edge)
+
     case Edge(_, rel, _) =>
       rel match {
         case _ => describeSVO(edge)
