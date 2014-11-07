@@ -50,6 +50,16 @@ private object ConceptNet {
     if end.isEmpty || (!bannedWords.contains(end.get) &&
         badPrefixes.find(end.get.startsWith(_)).isEmpty)
   } yield e
+
+
+  def builtins: (Set[Edge],Set[(String,Concept)]) = (Set(
+      // Augment conceptnet with a few more builtin concepts
+      Edge(DreamerGame,IsA,Abstract("/c/en/computer_game")),
+      Edge(Abstract("/c/en/conceptnet"),IsA,Abstract("/c/en/database"))
+    ), Set(
+      "dreamer of electric sheep" -> DreamerGame,
+      "conceptnet" -> Abstract("/c/en/conceptnet")
+    ))
 }
 
 class ConceptNet(
@@ -60,10 +70,22 @@ class ConceptNet(
     extends EdgeSource {
   type Self = ConceptNet
 
-  private var memo = MentalMap()
+  private var memo: MentalMap = {
+    val (edges, names) = ConceptNet.builtins
+    names.foldLeft(edges.foldLeft(MentalMap())(_+_)){ (mind, name_concept) =>
+      val (name,concept) = name_concept
+      mind.name(concept, name)
+    }
+  }
   private var alreadyFetched = Set[URL]()
 
-  def nameOf(c: Concept): Option[String] = memo.nameOf(c)
+  def nameOf(c: Concept): Option[String] = memo.nameOf(c) orElse (c match {
+    case Abstract(uri) =>
+      val url = new URL(baseURL + uri)
+      fetch(url) foreach (memo += _)
+      memo.nameOf(c)
+    case _ => None
+  })
   def named(name: String): Option[Concept] = memo.named(name) orElse {
     val url = new URL(baseURL + "/search?text=" + uriEncode(name))
     fetch(url) foreach (memo += _)
@@ -86,6 +108,7 @@ class ConceptNet(
     case HasA => Some("/r/HasA")
     case Verb(_) => None
     case NextTo(_) => None
+    case HasState => None
   }
   private def getRelation(uri: String) = uri match {
     case "/r/IsA" => Some(IsA)

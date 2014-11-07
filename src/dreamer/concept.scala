@@ -11,6 +11,7 @@ object Relation {
   case object HasA extends Relation
   case class Verb(val verb: String) extends Relation
   case class NextTo(val direction: String) extends Relation
+  case object HasState extends Relation
 }
 
 sealed abstract class QFragment[+T] {
@@ -34,6 +35,14 @@ object Concept {
   val Thing = Abstract("/c/en/thing")
   val Place = Abstract("/c/en/place")
   val Nothingness = Abstract("/c/en/nothing")
+
+  val DreamerGame = Abstract("/c/en/dreamer_game")
+
+  // States
+  val Sleeping = Abstract("/c/en/sleep")
+  val Awake = Abstract("/c/en/awake")
+  val Open = Abstract("/c/en/open")
+  val Closed = Abstract("/c/en/close")
 
   // Variables are for querying and searching relations
   case class Variable[T](name: T) extends QFragment[T]

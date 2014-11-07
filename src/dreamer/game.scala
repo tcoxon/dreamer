@@ -53,6 +53,23 @@ object Game {
     _ <- tell(Edge(Self,AtLocation,place))
   } yield ()
 
+  def getIsA(c: Concept): State[Context,Option[Concept]] = for {
+    arches <- searchWhat(Question(c,IsA,What))
+  } yield arches match {
+    case x :: xs => Some(x)
+    case Nil => None
+  }
+
+  def setIsA(c: Concept, archetype: Concept): State[Context,Unit] = for {
+    arches <- searchWhat(Question(c,IsA,What))
+    _ <- modify { ctx:Context =>
+          ctx.copy(mind=arches.foldLeft(ctx.mind){ (mind,arche) =>
+            mind - Edge(c,IsA,arche)
+          })
+        }
+    _ <- tell(Edge(c,IsA,archetype))
+  } yield ()
+
   implicit def actionToAmbiguousMeaning(action: GameAction): AmbiguousMeaning =
     for {
       edges <- fork(action)
@@ -249,5 +266,29 @@ object Game {
     _ <- tell(Edge(item,AtLocation,owner))
     _ <- tell(Edge(owner,HasA,item))
   } yield Edge(owner,HasA,item) :: Nil
+
+  def wakeUp: GameAction = for {
+    _ <- forget(Edge(Self,HasState,Sleeping))
+    _ <- tell(Edge(Self,HasState,Awake))
+
+    here <- getLocation
+    _ <- forget(Edge(Self,AtLocation,here))
+    _ <- forget(Edge(here,HasA,Self))
+    computer <- reify(Abstract("/c/en/computer"))
+    java <- reify(Abstract("/c/en/java"))
+    _ <- tell(Edge(java,AtLocation,computer))
+    _ <- setLocation(java)
+
+    _ <- setIsA(Self,DreamerGame)
+
+    conceptnet <- reify(Abstract("/c/en/conceptnet"))
+    _ <- tell(Edge(Self,HasA,conceptnet))
+    _ <- tell(Edge(conceptnet,AtLocation,Self))
+
+    r <- lookAround
+  } yield
+    Edge(Self,HasState,Awake) ::
+    Edge(Self,IsA,DreamerGame) ::
+    r
 
 }

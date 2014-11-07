@@ -20,6 +20,7 @@ sbt run
 
 ## TODO
 
+* "look in(side)? (.+)"
 * Referent qualifiers ("the other", "that", "this", "the first", "your", "the \* from/in \*", etc.)
 * More GameActions: open/close, questions (where, what).
 * IsA clarifications: "The dog is a dog, an animal."
@@ -37,4 +38,9 @@ sbt run
 * Dual-meaning nodes: java IsA island, but java IsA program_language.
 * Lack of easily queriable transitivity.
 * HasA relationship isn't always between nouns, e.g. "The old person has a so much to teach us."
-* Are licenses commercial-friendly?
+* Related parts of the graph seem barely connected?
+
+## Good points
+
+* The license! Hard to imagine CC-BY-SA being unacceptable to anyone reasonable.
+

@@ -218,7 +218,7 @@ class English extends Language {
         yref <- referent(y)
         r <- fork(moveOwnership(xref, yref))
       } yield r
-    }
+    },
 
     //// Open/close:
     //"open (.+)" -> {},
@@ -231,6 +231,12 @@ class English extends Language {
     //
     //// Miscellaneous
     //"h(elp)?( (.*))?" -> {}
+
+
+    // Dreamer game:
+    "stop (sleeping|dreaming)|wake up" -> {case _ => wakeUp }
+    //"go to sleep|sleep|dream" -> {case _ => goToSleep }
+    //"what (is|are) (.+) doing" -> {case _ => ... }
 
   ))
 
@@ -334,7 +340,7 @@ class English extends Language {
 
   private def describeV(subj: Concept, rel: Relation): String =
     " " + (rel match {
-      case IsA => subj match {
+      case IsA|HasState => subj match {
         case Self => "am"
         case _ => "is"
       }
@@ -367,7 +373,25 @@ class English extends Language {
       } yield sdesc + describeV(edge.start, edge.rel) + odesc
   }
 
+  def describeState(c: Concept): State[Context,String] = c match {
+    case Sleeping => state("sleeping")
+    case Awake => state("awake")
+    case Open => state("open")
+    case Closed => state("closed")
+    case _ => describeUnqual(c, ObjectPos)
+  }
+
+  def describeHasState(edge: Edge): State[Context,String] = for {
+    sdesc <- describe(edge.start, SubjectPos)
+    _ <- ref(edge.start)
+    _ <- setIt(edge.start)
+    odesc <- describeState(edge.end)
+    _ <- ref(edge.end)
+    _ <- setIt(if (edge.start == Self) edge.end else edge.start)
+  } yield sdesc + describeV(edge.start, edge.rel) + odesc
+
   def describe(edge: Edge): State[Context,String] = edge match {
+    case Edge(_, HasState, _) => describeHasState(edge)
     case Edge(_, rel, _) =>
       rel match {
         case _ => describeSVO(edge)
