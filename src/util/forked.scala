@@ -56,6 +56,8 @@ object ForkedState {
   def continueIf[S](cond: Boolean): ForkedState[S,Unit] =
     ForkedState(s => if (cond) List((s,())) else List())
 
+  def cancelFork[S,A]: ForkedState[S,A] = ForkedState(s => Nil)
+
   implicit def mpInstance[S] = new MonadPlus[({type L[A] = ForkedState[S,A]})#L] {
     def point[A](a: => A): ForkedState[S,A] = forked(a)
     def bind[A, B](fa: ForkedState[S,A])(f: A => ForkedState[S,B])

@@ -9,7 +9,7 @@ object Language {
   type AmbiguousMeaning = ForkedState[Context,Response]
   type SpecificMeaning = State[Context,Response]
   type Translator = PartialFunction[List[String],AmbiguousMeaning]
-  type Dictionary = Map[String,Translator]
+  type Dictionary = List[(String,Translator)]
 
   sealed abstract class NounPos
   case object SubjectPos extends NounPos
@@ -43,7 +43,7 @@ trait Language {
   def parse(text: String): AmbiguousMeaning = {
     val norm = normalizeInput(text)
     for {
-      dict: Map[String,Translator] <- fork(dictionary)
+      dict: Dictionary <- fork(dictionary)
       pair <- fork(dict.toList)
       val (patt, translation) = pair
       val maybeMatches: Option[List[String]] = patt.r.unapplySeq(norm)

@@ -21,7 +21,7 @@ sbt run
 ## TODO
 
 * Referent qualifiers ("the other", "that", "this", "the first", "your", "the \* from/in \*", etc.)
-* More GameActions: reification, open/close, questions (where, what).
+* More GameActions: open/close, questions (where, what).
 * IsA clarifications: "The dog is a dog, an animal."
 * Factoring Tells, e.g. "In the house, there is a cat and a dog." Might require Collection concepts.
 * NPCs
@@ -37,3 +37,4 @@ sbt run
 * Dual-meaning nodes: java IsA island, but java IsA program_language.
 * Lack of easily queriable transitivity.
 * HasA relationship isn't always between nouns, e.g. "The old person has a so much to teach us."
+* Are licenses commercial-friendly?

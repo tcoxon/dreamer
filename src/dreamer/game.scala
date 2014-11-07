@@ -223,7 +223,31 @@ object Game {
 
   def reifyThereIs(archetype: Concept, location: Concept): GameAction = for {
     real <- reify(archetype)
+    val _ = debug("reifyThereIs("+archetype.toString+", "+location.toString)
     _ <- tell(Edge(real,AtLocation,location))
   } yield Edge(real,AtLocation,location) :: Nil
+
+  def move(real: Concept, toLocation: Concept, tellPrefix: List[Edge]=Nil)
+      : GameAction = for {
+    currentLoc <- getUp(real)
+    val _ = debug("move("+real.toString+", "+tellPrefix.toString)
+    _ <- forget(Edge(real,AtLocation,currentLoc))
+    _ <- forget(Edge(currentLoc,HasA,real))
+    _ <- tell(Edge(real,AtLocation,toLocation))
+  } yield tellPrefix ++ List(Edge(real, AtLocation, toLocation))
+
+  def reifyHasA(owner: Concept, archetype: Concept): GameAction = for {
+    real <- reify(archetype)
+    _ <- tell(Edge(real,AtLocation,owner))
+    _ <- tell(Edge(owner,HasA,real))
+  } yield Edge(owner,HasA,real) :: Nil
+
+  def moveOwnership(owner: Concept, item: Concept): GameAction = for {
+    currentOwner <- getUp(item)
+    _ <- forget(Edge(item,AtLocation,currentOwner))
+    _ <- forget(Edge(currentOwner,HasA,item))
+    _ <- tell(Edge(item,AtLocation,owner))
+    _ <- tell(Edge(owner,HasA,item))
+  } yield Edge(owner,HasA,item) :: Nil
 
 }

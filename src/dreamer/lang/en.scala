@@ -10,7 +10,7 @@ import dreamer.game._, Game._
 
 class English extends Language {
 
-  override def dictionary: State[Context,Dictionary] = state(Map(
+  override def dictionary: State[Context,Dictionary] = state(List(
 
     "(take a )?l(ook( around.*)?)?" -> {case _ => lookAround},
 
@@ -160,11 +160,65 @@ class English extends Language {
         loc <- referent(locStr)
         r <- fork(reifyThereIs(x, loc))
       } yield r
+    },
+    "(.+) (is|are) in(side)? (.+)" -> {case List(concept,_,_,locStr) =>
+      for {
+        x <- abstractReferent(concept)
+        loc <- referent(locStr)
+        r <- fork(reifyThereIs(x, loc))
+      } yield r
+    },
+    "(.+) (is|are) (here|there)" -> {case List(concept,_,locStr) =>
+      for {
+        x <- abstractReferent(concept)
+        loc <- locationReferent(locStr)
+        r <- fork(reifyThereIs(x, loc))
+      } yield r
+    },
+    "(.+) (has|have) (.+)" -> {case List(x, _, a) =>
+      for {
+        xref <- referent(x)
+        arche <- abstractReferent(a)
+        r <- fork(reifyHasA(xref, arche))
+      } yield r
+    },
+
+    // Movement:
+    "in(side)? (.+) (is|are) (.+)" -> {case List(_,locStr,_,concept) =>
+      for {
+        x <- referent(concept)
+        loc <- referent(locStr)
+        r <- fork(move(x, loc))
+      } yield r
+    },
+    "(.+) (is|are) in(side)? (.+)" -> {case List(concept,_,_,locStr) =>
+      for {
+        x <- referent(concept)
+        loc <- referent(locStr)
+        r <- fork(move(x, loc))
+      } yield r
+    },
+    "move (.+) (in|to|into) (.+)" -> {case List(x, _, y) =>
+      for {
+        xref <- referent(x)
+        loc <- referent(y)
+        r <- fork(move(xref, loc, List(Edge(Self,Verb("moved"),xref))))
+      } yield r
+    },
+    "(.+) (is|are) (here|there)" -> {case List(x,_,l) =>
+      for {
+        xref <- referent(x)
+        loc <- locationReferent(l)
+        r <- fork(move(xref, loc))
+      } yield r
+    },
+    "(.+) (has|have) (.+)" -> {case List(x,_,y) =>
+      for {
+        xref <- referent(x)
+        yref <- referent(y)
+        r <- fork(moveOwnership(xref, yref))
+      } yield r
     }
-    //"(.+) (is|are) (.+)" -> {},
-    //"(.+) (is|are) in(side)? (.+)" -> {},
-    //"(.+) (is|are) (here|there)" -> {},
-    //"(.+) (has|have) (.+)" -> {},
 
     //// Open/close:
     //"open (.+)" -> {},
@@ -180,6 +234,13 @@ class English extends Language {
 
   ))
 
+
+  def locationReferent(text: String): ForkedState[Context,Concept] =
+    text match {
+      case "here" => fork(getLocation)
+      case "there" => getIt
+      case _ => cancelFork
+    }
 
   def abstractReferent(text: String): ForkedState[Context,Concept] = for {
     stripped <-

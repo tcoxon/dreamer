@@ -9,6 +9,8 @@ case class Conversation(lang: Language) {
 
   def query(text: String): State[Context,String] =
     for {
+      // TODO rather than parseSpecific, maybe choose one meaning based on
+      // likelihood? Perhaps choose by edge score/weight and some bayesian math?
       response <- lang.parseSpecific(text)
       ctx:Context <- get
       _ <- clearIt
