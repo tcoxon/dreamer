@@ -124,7 +124,7 @@ class English extends Language {
     },
 
     // Sequencing:
-    "(.+?)(\\.|,| and| then) (.+)" -> {case List(x,_,y) =>
+    "(.+?)(\\.|,|!|\\?| and| then) (.+)" -> {case List(x,_,y) =>
       for {
         xr <- parse(x)
 
@@ -240,6 +240,17 @@ class English extends Language {
 
   ))
 
+
+  override protected def normalizeInput(text: String) = {
+    val t1 = super.normalizeInput(text)
+    if (t1.length == 0) t1
+    else {
+      val lastCh = t1.charAt(t1.length-1)
+      if (".!?" contains lastCh)
+        t1.substring(0,t1.length-1).trim()
+      else t1
+    }
+  }
 
   def locationReferent(text: String): ForkedState[Context,Concept] =
     text match {

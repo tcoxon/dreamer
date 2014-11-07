@@ -33,11 +33,8 @@ trait Language {
 
   def describe(concept: Concept, pos: NounPos): State[Context,String]
 
-  protected def normalizeInput(text: String) = {
-    val t1 = "\\s+".r.replaceAllIn(text.trim()," ").toLowerCase()
-    if (t1.endsWith(".")) t1.substring(0,t1.length-1).trim()
-      else t1
-  }
+  protected def normalizeInput(text: String) =
+    "\\s+".r.replaceAllIn(text.trim()," ").toLowerCase()
 
   // Returns all possible meanings
   def parse(text: String): AmbiguousMeaning = {
