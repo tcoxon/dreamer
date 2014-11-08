@@ -26,7 +26,7 @@ sbt run
 * IsA clarifications: "The dog is a dog, an animal."
 * Factoring Tells, e.g. "In the house, there is a cat and a dog." Might require Collection concepts.
 * NPCs
-* Reality model
+* Make reality immutable (don't allow movement/mutation while state is Awake).
 * Asking clarification: what, which
 * Enhancement? Add a "weird" adjective to objects spawned via dreamWeirdDefaults
 

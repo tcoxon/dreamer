@@ -45,6 +45,6 @@ object CLI {
   def main(args: Array[String]) {
     //hideDebug = true
     //repl("look",initialContext)
-    repl("go to sleep. look",conceptNetGame)
+    repl("go to sleep",conceptNetGame)
   }
 }

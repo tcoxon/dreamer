@@ -79,12 +79,17 @@ object Context {
       case x: Realized => archetype(ctx, x)
       case _ => qf
     }
-  def superkind[T](ctx: Context, qf: QFragment[T]): QFragment[T] =
+  def superkind[T](ctx: Context, qf: Concept): Concept =
     qf match {
       case x: Realized => {Thing}
       case x: Abstract =>
         val results = ctx.mind.searchWhat(Question(x, IsA, What))
         if (results.size == 0) qf else ctx.r.shuffle(results.toList).head
+      case _ => qf
+    }
+  def superkind[T](ctx: Context, qf: QFragment[T]): QFragment[T] =
+    qf match {
+      case x: Concept => superkind(ctx, x)
       case _ => qf
     }
 

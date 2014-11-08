@@ -375,7 +375,8 @@ class English extends Language {
       }
     }) + " "
 
-  private def describeSVO(edge: Edge): State[Context,String] = edge match {
+  private def describeSVO(edge: Edge, clarify: Boolean=false)
+      : State[Context,String] = edge match {
     case Edge(Self,rel,Self) => state("I"+describeV(Self,rel)+"myself")
     case _ =>
       for {
@@ -386,7 +387,11 @@ class English extends Language {
                   else describe(edge.end, ObjectPos)
         _ <- ref(edge.end)
         _ <- setIt(if (edge.start == Self) edge.end else edge.start)
-      } yield sdesc + describeV(edge.start, edge.rel) + odesc
+        ctx:Context <- get
+        supk <- archetype(edge.end)
+        superDesc <- if (!clarify || supk == edge.end) state[Context,String]("")
+                      else describe(supk, ObjectPos).map(", "+_)
+      } yield sdesc + describeV(edge.start, edge.rel) + odesc + superDesc
   }
 
   def describeState(c: Concept): State[Context,String] = c match {
@@ -416,6 +421,8 @@ class English extends Language {
         yield "I don't know where "+desc+" "+describeV(c,IsA).trim()
 
     case Edge(_, HasState, _) => describeHasState(edge)
+
+    case Edge(real, IsA, arche) => describeSVO(edge, true)
 
     case Edge(_, rel, _) =>
       rel match {
