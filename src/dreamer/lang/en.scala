@@ -234,9 +234,14 @@ class English extends Language {
 
 
     // Dreamer game:
-    "stop (sleeping|dreaming)|wake up" -> {case _ => wakeUp }
-    //"go to sleep|sleep|dream" -> {case _ => goToSleep }
-    //"what (is|are) (.+) doing" -> {case _ => ... }
+    "stop (sleeping|dreaming)|wake up" -> {case _ => wakeUp },
+    "go to sleep|sleep|dream" -> {case _ => goToSleep },
+    "what (is|are) (.+) doing" -> {case List(_,x) =>
+      for {
+        xref <- referent(x)
+        r <- whatState(xref)
+      } yield r
+    }
 
   ))
 
@@ -389,6 +394,7 @@ class English extends Language {
     case Awake => state("awake")
     case Open => state("open")
     case Closed => state("closed")
+    case Nothingness => state("doing nothing")
     case _ => describeUnqual(c, ObjectPos)
   }
 

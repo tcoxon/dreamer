@@ -74,6 +74,15 @@ object Game {
     _ <- tell(Edge(c,IsA,archetype))
   } yield ()
 
+  def dropEverything: State[Context,Unit] = for {
+    items <- searchWhat(Question(What,AtLocation,Self))
+    _ <- modify { ctx: Context =>
+          ctx.copy(mind=items.foldLeft(ctx.mind){ (mind,item) =>
+            mind - Edge(Self,HasA,item) - Edge(item,AtLocation,Self)
+          })
+        }
+  } yield ()
+
   implicit def actionToAmbiguousMeaning(action: GameAction): AmbiguousMeaning =
     for {
       edges <- fork(action)
@@ -275,6 +284,8 @@ object Game {
     _ <- forget(Edge(Self,HasState,Sleeping))
     _ <- tell(Edge(Self,HasState,Awake))
 
+    _ <- modify{ctx:Context => ctx.copy(refList=Nil, it=None)}
+
     here <- getLocation
     _ <- forget(Edge(Self,AtLocation,here))
     _ <- forget(Edge(here,HasA,Self))
@@ -285,6 +296,7 @@ object Game {
 
     _ <- setIsA(Self,DreamerGame)
 
+    _ <- dropEverything
     conceptnet <- reify(Abstract("/c/en/conceptnet"))
     _ <- tell(Edge(Self,HasA,conceptnet))
     _ <- tell(Edge(conceptnet,AtLocation,Self))
@@ -293,6 +305,36 @@ object Game {
   } yield
     Edge(Self,HasState,Awake) ::
     Edge(Self,IsA,DreamerGame) ::
+    r
+
+  def whatState(x: Concept): GameAction = for {
+    states0 <- reifyingSearch(Question(x,HasState,What))
+  } yield {
+    val states =
+      if (states0.size == 0) List(Nothingness)
+      else states0
+    states.map(Edge(x,HasState,_))
+  }
+
+  def goToSleep: GameAction = for {
+    _ <- forget(Edge(Self,HasState,Awake))
+    _ <- tell(Edge(Self,HasState,Sleeping))
+
+    here <- getLocation
+    _ <- forget(Edge(Self,AtLocation,here))
+
+    selfIsA <- getIsA(Self)
+    _ <- (selfIsA match {
+        case Some(kind) => forget(Edge(Self,IsA,kind))
+        case None => state(())
+      }): State[Context,Unit]
+    _ <- tell(Edge(Self,IsA,Unknown))
+    
+    _ <- dropEverything
+    r <- lookAround
+  } yield
+    Edge(Self,HasState,Sleeping) ::
+    Edge(Self,IsA,Unknown) ::
     r
 
 }
