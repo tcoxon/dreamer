@@ -1,6 +1,7 @@
 package appletui
 import java.io._
 import java.awt._, java.awt.event._, javax.swing._, javax.swing.border._
+import java.awt.image._, javax.imageio._
 
 
 class GameState(val game: GameContainer) extends JPanel {
@@ -46,6 +47,11 @@ object GameConstants {
   lazy val titleFont = defaultFont.deriveFont(32.0f)
 
   val TRANSPARENT = new Color(0, 0, 0, 0)
+
+  lazy val awakeImage =
+      ImageIO.read(this.getClass.getResourceAsStream("/awake.png"))
+  lazy val dreamingImage =
+      ImageIO.read(this.getClass.getResourceAsStream("/dreaming.png"))
 }
 
 object GameUtil {
@@ -101,6 +107,24 @@ object GameLabel {
   def withHtml(html: String): GameLabel = {
     new GameLabel(surroundWithHtml(html))
   }
+}
+
+class ImagePanel(
+    var imageSize: (Int,Int),
+    var image: BufferedImage
+  ) extends GamePanel {
+  
+  override def paint(g: Graphics) {
+    super.paint(g)
+    if (image != null) {
+      val x = (getWidth-imageSize._1)/2
+      val y = (getHeight-imageSize._2)/2
+      g.drawImage(image, x, y, imageSize._1, imageSize._2, null)
+    }
+  }
+
+  override def getMinimumSize() = new Dimension(imageSize._1, imageSize._2)
+  override def getPreferredSize() = getSize()
 }
 
 class GameField(font: Font=GameConstants.defaultFont) extends JTextField {
@@ -193,6 +217,7 @@ class TitleState(game: GameContainer) extends GameState(game) {
   add(titlePanel, BorderLayout.NORTH)
   val titleLbl = new GameLabel("DREAMER OF ELECTRIC SHEEP",
       GameConstants.titleFont)
+  titleLbl.setForeground(Color.CYAN)
   titleLbl.setHorizontalAlignment(SwingConstants.CENTER)
   titleLbl.setBorder(BorderFactory.createEmptyBorder(50,50,20,50))
   titlePanel.add(titleLbl, BorderLayout.CENTER)
@@ -201,8 +226,12 @@ class TitleState(game: GameContainer) extends GameState(game) {
   subtitleLbl.setHorizontalAlignment(SwingConstants.CENTER)
   subtitleLbl.setBorder(BorderFactory.createEmptyBorder(10,10,10,10))
   titlePanel.add(subtitleLbl, BorderLayout.SOUTH)
+
+  val faceImage = new ImagePanel((300, 264), GameConstants.dreamingImage)
+  add(faceImage, BorderLayout.CENTER)
   
   val clickLbl = new GameLabel("CLICK TO GIVE FOCUS", GameConstants.titleFont)
+  clickLbl.setForeground(Color.GREEN)
   clickLbl.setHorizontalAlignment(SwingConstants.CENTER)
   clickLbl.setBorder(BorderFactory.createEmptyBorder(50,50,50,50))
   add(clickLbl, BorderLayout.SOUTH)

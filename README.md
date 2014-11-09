@@ -32,6 +32,7 @@ https://github.com/gamesbyangelina/spritely
 
 ## TODO
 
+* Use spritely to produce sprites of locations and objects.
 * Referent qualifiers ("the other", "that", "this", "the first", "your", "the \* from/in \*", etc.)
 * More GameActions: open/close, questions (where, what).
 * Factoring Tells, e.g. "In the house, there is a cat and a dog." Might require Collection concepts.

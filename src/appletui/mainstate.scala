@@ -14,20 +14,27 @@ class MainGameState(game: GameContainer) extends GameState(game) {
   val inputBox = new GameField()
   inputBox.setText("--")
   inputBox.requestFocus()
-  for (x <- List(responseLbl, inputPanel)) {
-    x.setBorder(BorderFactory.createEmptyBorder(50,50,50,50))
-  }
   outputPanel.add(responseLbl, BorderLayout.SOUTH)
   inputPanel.add(promptLbl, BorderLayout.WEST)
   inputPanel.add(inputBox, BorderLayout.CENTER)
   add(inputPanel, BorderLayout.SOUTH)
   add(outputPanel, BorderLayout.CENTER)
 
+  responseLbl.setBorder(BorderFactory.createEmptyBorder(0, 50, 0, 50))
+  inputPanel.setBorder(BorderFactory.createEmptyBorder(50,50,50,50))
+
   inputBox.setAction(new AbstractAction {
     override def actionPerformed(e: ActionEvent) {
       submit(inputBox.getText())
     }
   })
+
+  val faceImage = new ImagePanel((300, 264), GameConstants.dreamingImage)
+  faceImage.setBorder(BorderFactory.createEmptyBorder(50,50,50,50))
+  val facePanel = new GamePanel(new BorderLayout)
+  facePanel.add(faceImage, BorderLayout.CENTER)
+  outputPanel.add(facePanel, BorderLayout.CENTER)
+
 
   import dreamer.concept._, dreamer.context._, dreamer.conceptnet._
   import dreamer.conversation._, dreamer.lang.html_en._
@@ -70,6 +77,11 @@ class MainGameState(game: GameContainer) extends GameState(game) {
 
     response.map{x =>
       responseLbl.html(x)
+    }
+
+    awake.map{x =>
+      faceImage.image = if (x) GameConstants.awakeImage
+          else GameConstants.dreamingImage
     }
   }
 
