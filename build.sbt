@@ -5,11 +5,15 @@ name := "dreamer"
 
 version := "0.1"
 
-mainClass in Compile := Some("CLI")
+//mainClass in Compile := Some("CLI")
+
+mainClass in Compile := Some("AppletMain")
 
 scalaVersion := "2.9.3"
 
 scalaSource in Compile := baseDirectory.value / "src"
+
+resourceDirectory in Compile := baseDirectory.value / "res"
 
 exportJars := true
 

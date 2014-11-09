@@ -1,7 +1,6 @@
-# He Who Dreams Of Electric Sheep
+# Dreamer of Electric Sheep
 
-(Code name: dreamer)
-
+TODO brief description of the game
 
 ## Building
 
@@ -11,12 +10,25 @@ Ensure you have sbt installed: www.scala-sbt.org
 sbt one-jar
 ```
 
-
 ## Running
 
 ```bash
 sbt run
 ```
+
+## License
+
+Dreamer of Electric Sheep is licensed to you under the terms of the MIT license.
+http://opensource.org/licenses/MIT
+
+ConceptNet5 data is under the CC-BY-SA license.
+https://github.com/commonsense/conceptnet5/wiki/Copying-and-sharing-ConceptNet
+
+The font in the applet game is "Beeb" by Andy Armstrong, under CC-BY-SA.
+http://fontstruct.com/fontstructions/show/beeb
+
+Spritely, which generates the sprites used in the game is public domain.
+https://github.com/gamesbyangelina/spritely
 
 ## TODO
 
