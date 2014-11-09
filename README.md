@@ -20,7 +20,6 @@ sbt run
 
 ## TODO
 
-* "look in(side)? (.+)"
 * Referent qualifiers ("the other", "that", "this", "the first", "your", "the \* from/in \*", etc.)
 * More GameActions: open/close, questions (where, what).
 * IsA clarifications: "The dog is a dog, an animal."

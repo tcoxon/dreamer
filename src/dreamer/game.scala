@@ -259,6 +259,14 @@ object Game {
     _ <- tell(Edge(real,AtLocation,location))
   } yield Edge(real,AtLocation,location) :: Nil
 
+  def build(archetype: Concept, location: Concept, verb: String): GameAction =
+    for {
+      real <- reify(archetype)
+      val _ = debug("build("+archetype.toString+", "+location.toString)
+      _ <- tell(Edge(real,AtLocation,location))
+    } yield
+      Edge(Self, Verb(verb), real) :: Edge(real,AtLocation,location) :: Nil
+
   def move(real: Concept, toLocation: Concept, tellPrefix: List[Edge]=Nil)
       : GameAction = for {
     currentLoc <- locationOf(real)

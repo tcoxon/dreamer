@@ -189,6 +189,22 @@ class English extends Language {
         r <- fork(reifyHasA(xref, arche))
       } yield r
     },
+    "(create|build|make|reify|realize|rez) (.+)" -> {case List(verb,archeStr) =>
+      val pastTense = verb match {
+        case "create" => "created"
+        case "build" => "built"
+        case "make" => "made"
+        case "reify" => "reified"
+        case "realize" => "realized"
+        case "rez" => "rezzed"
+        case _ => verb
+      }
+      for {
+        arche <- abstractReferent(archeStr)
+        loc <- fork(getLocation)
+        r <- fork(build(arche, loc, pastTense))
+      } yield r
+    },
 
     // Movement:
     "in(side)? (.+) (is|are) (.+)" -> {case List(_,locStr,_,concept) =>
