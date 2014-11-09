@@ -8,6 +8,7 @@ class MainGameState(game: GameContainer) extends GameState(game) {
 
   val responseLbl = new GameLabel("")
   val inputPanel = new GamePanel(new BorderLayout)
+  val outputPanel = new GamePanel(new BorderLayout)
   val promptLbl = new GameLabel("> ")
   promptLbl.setForeground(Color.GREEN)
   val inputBox = new GameField()
@@ -16,10 +17,11 @@ class MainGameState(game: GameContainer) extends GameState(game) {
   for (x <- List(responseLbl, inputPanel)) {
     x.setBorder(BorderFactory.createEmptyBorder(50,50,50,50))
   }
-  add(responseLbl, BorderLayout.CENTER)
+  outputPanel.add(responseLbl, BorderLayout.SOUTH)
   inputPanel.add(promptLbl, BorderLayout.WEST)
   inputPanel.add(inputBox, BorderLayout.CENTER)
   add(inputPanel, BorderLayout.SOUTH)
+  add(outputPanel, BorderLayout.CENTER)
 
   inputBox.setAction(new AbstractAction {
     override def actionPerformed(e: ActionEvent) {
