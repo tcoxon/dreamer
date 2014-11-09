@@ -26,14 +26,14 @@ class TestLanguage extends Language {
         for {
           xref <- abstractReferent(x)
           _ <- fork(reify(xref))
-        } yield Ack
+        } yield Tell(Nil)
       },
       "(.*) is (.*)" -> {case List(x,y) =>
         for {
           xref <- referent(x)
           yref <- abstractReferent(y)
           _ <- fork(tell(Edge(xref,IsA,yref)))
-        } yield Ack
+        } yield Tell(Nil)
       }
     ))
 

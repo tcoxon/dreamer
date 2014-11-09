@@ -3,6 +3,7 @@ import scalaz._, Scalaz._
 import dreamer.concept._, Concept._, Relation._
 import dreamer.context._, Context._
 import dreamer.lang._, Language._
+import dreamer.game._
 
 
 case class Conversation(lang: Language) {
@@ -14,7 +15,8 @@ case class Conversation(lang: Language) {
       response <- lang.parseSpecific(text)
       ctx:Context <- get
       _ <- clearIt
-      desc <- lang.describe(response)
+      simulationR <- Game.simulateWorld
+      desc <- lang.describe(response + simulationR)
     } yield desc
 
 }

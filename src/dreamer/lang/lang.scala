@@ -26,7 +26,6 @@ object Language {
   case class ParseFailure(/*TODO extra info*/) extends Response
   case class MultiResponse(val resps: List[Response]) extends Response
   case object CantDoThat extends Response
-  val Ack = Tell(Nil)
 }
 
 trait Language {

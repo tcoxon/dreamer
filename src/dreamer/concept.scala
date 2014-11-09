@@ -45,6 +45,8 @@ object Concept {
   val Open = Abstract("/c/en/open")
   val Closed = Abstract("/c/en/close")
 
+  case class Speech(val text: String) extends Concept
+
   // Variables are for querying and searching relations
   case class Variable[T](name: T) extends QFragment[T]
   val What = Variable(())

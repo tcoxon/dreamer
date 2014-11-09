@@ -10,6 +10,9 @@ import dreamer.lang._, Language._
 object Game {
   type GameAction = State[Context,Response]
 
+  val Human = Abstract("/c/en/human")
+  val Person = Abstract("/c/en/person")
+
 
   def createPlace: State[Context,Concept] =
     for {
@@ -79,6 +82,20 @@ object Game {
         }
   } yield ()
 
+  def getStates(c: Concept): State[Context,List[Concept]] = for {
+    ans <- searchWhat(Question(c,HasState,What))
+  } yield ans
+  
+  def setState(c: Concept, st: Concept): State[Context,Unit] = for {
+    states <- getStates(c)
+    _ <- modify { ctx: Context =>
+        states.foldLeft(ctx){ (ctx, sta) =>
+          ctx.copy(mind= ctx.mind - Edge(c, HasState, sta))
+        }
+      }
+    _ <- tell(Edge(c, HasState, st))
+  } yield ()
+
   implicit def edgeToResponse(edge: Edge): Response =
     Tell(edge :: Nil)
 
@@ -104,7 +121,12 @@ object Game {
   def dreamOnly(action: GameAction): GameAction = for {
     ctx: Context <- get
     val awake = isAwake(ctx)
+    owner <- ownerOf(Self)
+    ownerArche <- (if (owner.isEmpty) state(None)
+                    else getIsA(owner.get)): State[Context,Option[Concept]]
     r <- (if (awake) state(CantDoThat)
+          else if (ownerArche == Some(Human) || ownerArche == Some(Person))
+            state(CantDoThat + Edge(owner.get,HasA,Self))
           else action): GameAction
   } yield r
 
@@ -124,7 +146,9 @@ object Game {
       val things2 =
           if (things1.size == 0) List(Nothingness)
           else things1
-    } yield things2.map(Edge(_,AtLocation,here))
+      states <- getStates(here)
+    } yield states.map(Edge(here,HasState,_)) +
+        things2.map(Edge(_,AtLocation,here))
 
   def lookIn(place: Concept): GameAction = for {
     things <- reifyingSearch(Question(What, AtLocation, place))
@@ -358,9 +382,53 @@ object Game {
     
     _ <- dropEverything
     r <- lookAround
-  } yield
-    Edge(Self,HasState,Sleeping) +
-    Edge(Self,IsA,Unknown) +
-    r
+  } yield Edge(Self,HasState,Sleeping) + Edge(Self,IsA,Unknown) + r
 
+  def simulateWorld: GameAction = {
+
+    def nextState(states: List[Concept]): (Concept,Option[(Relation,Concept)]) = {
+      if (states contains Abstract("/c/en/scary")) {
+        (Abstract("/c/en/looming"), Some((Verb("whispered"),Speech("wake up"))))
+      } else if (states contains Abstract("/c/en/looming")) {
+        (Abstract("/c/en/grabbing"), Some((Verb("shouted"),Speech("WAKE UP"))))
+      } else if (states contains Abstract("/c/en/grabbing")) {
+        (Abstract("/c/en/laughing_maniacally"), None)
+      } else {
+        (Abstract("/c/en/scary"), None)
+      }
+    }
+    def updateHumans(humans: List[Concept]): GameAction = humans match {
+      case human::tail =>
+        for {
+          states <- getStates(human)
+          val (st,sp) = nextState(states)
+          _ <- setState(human, st)
+          r1 <- (if (st == Abstract("/c/en/laughing_maniacally"))
+                  for {
+                    r <- moveOwnership(human, Self)
+                    _ <- tell(
+                      Edge(human,HasState,Abstract("/c/en/yelling_wake_up")))
+                  } yield r
+                else state(MultiResponse(Nil))):GameAction
+          recur <- updateHumans(tail)
+          val result0 = r1 + Edge(human,HasState,st)
+          val result = if (sp.isEmpty) result0
+                        else result0 + Edge(human, sp.get._1, sp.get._2)
+        } yield result + recur
+      case _ => state(MultiResponse(Nil))
+    }
+
+    for {
+      here <- locationOf(Self)
+      owner <- ownerOf(Self)
+      humans0 <- search(
+        Question(What,AtLocation,here),
+        Question(What,IsA,Human))
+      humans1 <- search(
+        Question(What,AtLocation,here),
+        Question(What,IsA,Person))
+      val humans = (humans0++humans1).map(_.get(()).get)
+      r <- updateHumans(humans)
+    } yield r
+  }
 }

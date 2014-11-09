@@ -258,7 +258,7 @@ class English extends Language {
 
     // Dreamer game:
     "stop (sleeping|dreaming)|wake up" -> {case _ => wakeUp },
-    "go to sleep|sleep|dream" -> {case _ => goToSleep },
+    "go (back )?to sleep|sleep|dream" -> {case _ => goToSleep },
     "what (is|are) (.+) doing" -> {case List(_,x) =>
       for {
         xref <- referent(x)
@@ -351,13 +351,18 @@ class English extends Language {
         case ObjectPos => "me"
       })
       case Abstract(uri) =>
-        assert(false)
-        state(uri)
+        for {
+          ctx <- get
+        } yield ctx.mind.nameOf(concept) match {
+          case Some(x) => x
+          case None => uri
+        }
       case r@Realized(_) =>
         for {
           arche <- archetype(r)
           desc <- getArchetypeName(arche)
         } yield desc
+      case Speech(text) => state("\""+text+"\"")
     }
 
   def singular(noun: String): String =
@@ -375,6 +380,7 @@ class English extends Language {
         } yield
           if (isIt(ctx, concept)) "it" else
             (if (isReffed(ctx, concept)) "the "+desc else singular(desc))
+      case Speech(text) => describeUnqual(concept, pos)
     }
 
   private def describeV(subj: Concept, rel: Relation): String =
@@ -474,7 +480,6 @@ class English extends Language {
   }
 
   def describe(response: Response): State[Context,String] = response match {
-    case Ack => state("OK.")
     case Tell(es) => for (descs <- describe(es)) yield descs.mkString(" ")
     case Clarify(options) => state("Can you clarify that?" + (options match {
       case Nil => ""

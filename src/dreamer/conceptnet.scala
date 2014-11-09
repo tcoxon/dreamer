@@ -30,7 +30,7 @@ private object ConceptNet {
         "sex" ::
         // way too generic
         "something" :: "someone" :: "area" ::
-        "there" :: "this" ::
+        "there" :: "this" :: "it" ::
         Nil
 
   val badPrefixes =
@@ -58,7 +58,11 @@ private object ConceptNet {
       Edge(Abstract("/c/en/conceptnet"),IsA,Abstract("/c/en/database"))
     ), Set(
       "dreamer of electric sheep" -> DreamerGame,
-      "conceptnet" -> Abstract("/c/en/conceptnet")
+      "conceptnet" -> Abstract("/c/en/conceptnet"),
+      "looming" -> Abstract("/c/en/looming"),
+      "grabbing" -> Abstract("/c/en/grabbing"),
+      "laughing maniacally" -> Abstract("/c/en/laughing_maniacally"),
+      "yelling \"WAKE UP\"" -> Abstract("/c/en/yelling_wake_up")
     ))
 }
 
