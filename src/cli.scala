@@ -43,7 +43,7 @@ object CLI {
   }
 
   def main(args: Array[String]) {
-    //hideDebug = true
+    hideDebug = true
     //repl("look",initialContext)
     repl("go to sleep",conceptNetGame)
   }

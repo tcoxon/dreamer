@@ -20,6 +20,13 @@ class English extends Language {
         r <- lookAt(xref)
       } yield r
     },
+
+    "(take a)?look in(side|to)? (.+)" -> {case List(_,_,x) =>
+      for {
+        xref <- referent(x)
+        r <- lookIn(xref)
+      } yield r
+    },
     
     "(exit|leave)( here| this place)?" -> {case _ => leave},
 

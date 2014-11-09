@@ -48,9 +48,6 @@ object Game {
   def getLocation: State[Context,Concept] =
     locationOf(Self)
 
-  def getUp(place: Concept): State[Context,Concept] =
-    locationOf(place)
-
   def setLocation(place: Concept): State[Context,Unit] = for {
     here <- getLocation
     _ <- forget(Edge(Self,AtLocation,here))
@@ -127,6 +124,11 @@ object Game {
       })
     }
 
+  def lookIn(place: Concept): GameAction = for {
+    things <- reifyingSearch(Question(What, AtLocation, place))
+  } yield (if (things.size == 0) List(Nothingness) else things).map(
+      Edge(_, AtLocation, place))
+
 
   def lookAt(x: Concept): GameAction =
     for {
@@ -142,7 +144,7 @@ object Game {
   def leave: GameAction =
     for {
       here <- getLocation
-      up <- getUp(here)
+      up <- locationOf(here)
       _ <- setLocation(up)
       r <- lookAround
     } yield Edge(Self,Verb("left"),here) :: r
@@ -245,7 +247,7 @@ object Game {
         val _ = assert(otherSides.size == 1)
         val otherSide = otherSides.head
         _ <- tell(Edge(portal,NextTo("through"),otherSide))
-        target <- getUp(otherSide)
+        target <- locationOf(otherSide)
         _ <- setLocation(target)
         r <- lookAround
       } yield Edge(Self, verb, otherSide) :: r
@@ -259,7 +261,7 @@ object Game {
 
   def move(real: Concept, toLocation: Concept, tellPrefix: List[Edge]=Nil)
       : GameAction = for {
-    currentLoc <- getUp(real)
+    currentLoc <- locationOf(real)
     val _ = debug("move("+real.toString+", "+tellPrefix.toString)
     _ <- forget(Edge(real,AtLocation,currentLoc))
     _ <- forget(Edge(currentLoc,HasA,real))
@@ -273,7 +275,7 @@ object Game {
   } yield Edge(owner,HasA,real) :: Nil
 
   def moveOwnership(owner: Concept, item: Concept): GameAction = for {
-    currentOwner <- getUp(item)
+    currentOwner <- locationOf(item)
     _ <- forget(Edge(item,AtLocation,currentOwner))
     _ <- forget(Edge(currentOwner,HasA,item))
     _ <- tell(Edge(item,AtLocation,owner))
