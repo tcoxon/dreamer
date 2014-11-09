@@ -15,11 +15,17 @@ object Language {
   case object SubjectPos extends NounPos
   case object ObjectPos extends NounPos
 
-  sealed abstract class Response
+  sealed abstract class Response {
+    def +(other: Response): Response = other match {
+      case MultiResponse(xs) => MultiResponse(this :: xs)
+      case _ => MultiResponse(this :: other :: Nil)
+    }
+  }
   case class Tell(val edges: List[Edge]) extends Response
   case class Clarify(val options: List[String]) extends Response
   case class ParseFailure(/*TODO extra info*/) extends Response
   case class MultiResponse(val resps: List[Response]) extends Response
+  case object CantDoThat extends Response
   val Ack = Tell(Nil)
 }
 

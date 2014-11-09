@@ -22,7 +22,6 @@ sbt run
 
 * Referent qualifiers ("the other", "that", "this", "the first", "your", "the \* from/in \*", etc.)
 * More GameActions: open/close, questions (where, what).
-* IsA clarifications: "The dog is a dog, an animal."
 * Factoring Tells, e.g. "In the house, there is a cat and a dog." Might require Collection concepts.
 * NPCs
 * Make reality immutable (don't allow movement/mutation while state is Awake).

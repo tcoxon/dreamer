@@ -493,6 +493,7 @@ class English extends Language {
         val (ctx1, desc) = describers.foldLeft((ctx,""))(folder)
         _ <- put(ctx1)
       } yield desc.trim()
+    case CantDoThat => state("I can't do that.")
   }
 
 }

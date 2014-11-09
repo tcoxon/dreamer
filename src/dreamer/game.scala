@@ -8,8 +8,7 @@ import dreamer.lang._, Language._
 
 
 object Game {
-  type ActionResult = List[Edge]
-  type GameAction = State[Context,ActionResult]
+  type GameAction = State[Context,Response]
 
 
   def createPlace: State[Context,Concept] =
@@ -80,18 +79,19 @@ object Game {
         }
   } yield ()
 
-  implicit def actionToAmbiguousMeaning(action: GameAction): AmbiguousMeaning =
-    for {
-      edges <- fork(action)
-    } yield Tell(edges)
+  implicit def edgeToResponse(edge: Edge): Response =
+    Tell(edge :: Nil)
 
-  implicit def actionResultToResponse(result: ActionResult): Response =
-    Tell(result)
+  implicit def edgesToResponse(edges: List[Edge]): Response =
+    Tell(edges)
+
+  implicit def actionToAmbiguousMeaning(action: GameAction): AmbiguousMeaning =
+    fork(action)
 
   // Here we normalize out things like HasA and AtLocation being closely
   // related. If you have a cat, the cat's location is you. So when describing
   // the cat, we say "You have the cat." rather than "The cat is in you."
-  def normalizeTell(ctx: Context, edges: ActionResult): ActionResult = {
+  def normalizeTell(ctx: Context, edges: List[Edge]): List[Edge] = {
     def preferHas(edge: Edge) = edge match {
       case Edge(x,AtLocation,y) =>
         if (ctx.mind.ask(Question(y,HasA,x)).size != 0) Edge(y,HasA,x)
@@ -105,24 +105,19 @@ object Game {
   def lookAround: GameAction =
     for {
       here <- getLocation
+      things <- lookAroundNoSelf
+    } yield Edge(Self,AtLocation,here) + things
+
+  def lookAroundNoSelf: GameAction =
+    // do the same as lookAround, but without referencing Self.
+    for {
+      here <- getLocation
       things0 <- reifyingSearch(Question(What, AtLocation, here))
       val things1 = things0.filter(_!=Self)
       val things2 =
           if (things1.size == 0) List(Nothingness)
           else things1
-    } yield Edge(Self,AtLocation,here) ::
-        things2.map(Edge(_,AtLocation,here))
-
-  def lookAroundNoSelf: GameAction =
-    // do the same as lookAround, but without referencing Self.
-    for {
-      r <- lookAround
-    } yield {
-      r.filter(e => e match {
-        case Edge(Self,AtLocation,_) => false
-        case _ => true
-      })
-    }
+    } yield things2.map(Edge(_,AtLocation,here))
 
   def lookIn(place: Concept): GameAction = for {
     things <- reifyingSearch(Question(What, AtLocation, place))
@@ -147,7 +142,7 @@ object Game {
       up <- locationOf(here)
       _ <- setLocation(up)
       r <- lookAround
-    } yield Edge(Self,Verb("left"),here) :: r
+    } yield Edge(Self,Verb("left"),here) + r
 
   def leave(location: Concept): GameAction =
     for {
@@ -163,7 +158,7 @@ object Game {
     for {
       _ <- setLocation(target)
       r <- lookAroundNoSelf
-    } yield Edge(Self,Verb("went into"),target) :: r
+    } yield Edge(Self,Verb("went into"),target) + r
 
   def take(item: Concept): GameAction =
     for {
@@ -231,7 +226,7 @@ object Game {
     _ <- tell(Edge(here,NextTo(opposite),inDir))
     _ <- setLocation(inDirs.head)
     r <- lookAroundNoSelf
-  } yield Edge(Self,Verb("went "+dir+" in"),inDir) :: r
+  } yield Edge(Self,Verb("went "+dir+" in"),inDir) + r
 
   def goThrough(portal: Concept, verb: Verb): GameAction = portal match {
     case Self =>
@@ -239,7 +234,7 @@ object Game {
         here <- getLocation
         _ <- forget(Edge(Self,AtLocation,here))
         r <- lookAround
-      } yield Edge(Self,verb, portal) :: r
+      } yield Edge(Self,verb, portal) + r
     case _ =>
       for {
         otherSides <- reifyingSearch(Question(What,NextTo("through"),portal))
@@ -250,7 +245,7 @@ object Game {
         target <- locationOf(otherSide)
         _ <- setLocation(target)
         r <- lookAround
-      } yield Edge(Self, verb, otherSide) :: r
+      } yield Edge(Self, verb, otherSide) + r
   }
 
   def reifyThereIs(archetype: Concept, location: Concept): GameAction = for {
@@ -313,8 +308,8 @@ object Game {
 
     r <- lookAround
   } yield
-    Edge(Self,HasState,Awake) ::
-    Edge(Self,IsA,DreamerGame) ::
+    Edge(Self,HasState,Awake) +
+    Edge(Self,IsA,DreamerGame) +
     r
 
   def whatState(x: Concept): GameAction = for {
@@ -343,8 +338,8 @@ object Game {
     _ <- dropEverything
     r <- lookAround
   } yield
-    Edge(Self,HasState,Sleeping) ::
-    Edge(Self,IsA,Unknown) ::
+    Edge(Self,HasState,Sleeping) +
+    Edge(Self,IsA,Unknown) +
     r
 
 }
