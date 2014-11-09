@@ -101,6 +101,13 @@ object Game {
     edges.map(preferHas).distinct
   }
 
+  def dreamOnly(action: GameAction): GameAction = for {
+    ctx: Context <- get
+    val awake = isAwake(ctx)
+    r <- (if (awake) state(CantDoThat)
+          else action): GameAction
+  } yield r
+
 
   def lookAround: GameAction =
     for {
@@ -136,15 +143,16 @@ object Game {
       hases.map(w => Edge(x,HasA,w))
 
 
-  def leave: GameAction =
+  def leave: GameAction = dreamOnly {
     for {
       here <- getLocation
       up <- locationOf(here)
       _ <- setLocation(up)
       r <- lookAround
     } yield Edge(Self,Verb("left"),here) + r
+  }
 
-  def leave(location: Concept): GameAction =
+  def leave(location: Concept): GameAction = dreamOnly {
     for {
       here <- getLocation
       r <- (if (here == location) {
@@ -153,14 +161,16 @@ object Game {
           state(Edge(Self,AtLocation,here)::Nil)
         }): GameAction
     } yield r
+  }
 
-  def enter(target: Concept): GameAction =
+  def enter(target: Concept): GameAction = dreamOnly {
     for {
       _ <- setLocation(target)
       r <- lookAroundNoSelf
     } yield Edge(Self,Verb("went into"),target) + r
+  }
 
-  def take(item: Concept): GameAction =
+  def take(item: Concept): GameAction = dreamOnly {
     for {
       loc <- locationOf(item)
       owner <- ownerOf(item)
@@ -180,8 +190,9 @@ object Game {
           } yield Edge(Self,Verb("took"),item) :: Nil
       }): GameAction
     } yield r
+  }
 
-  def drop(item: Concept, location: Concept): GameAction = for {
+  def drop(item: Concept, location: Concept): GameAction = dreamOnly { for {
     owner <- ownerOf(item)
     r <- (owner match {
         case Some(Self) => for {
@@ -192,9 +203,9 @@ object Game {
             Edge(item,AtLocation,location) :: Nil
         case _ => state(Edge(Self,Verb("don't have"),item) :: Nil)
       }): GameAction
-  } yield r
+  } yield r }
 
-  def give(item: Concept, to: Concept): GameAction = for {
+  def give(item: Concept, to: Concept): GameAction = dreamOnly { for {
     owner <- ownerOf(item)
     r <- (owner match {
         case Some(Self) => for {
@@ -206,7 +217,7 @@ object Game {
             Edge(to,HasA,item) :: Nil
         case _ => state(Edge(Self,Verb("don't have"),item) :: Nil)
       }): GameAction
-  } yield r
+  } yield r }
 
   def invent: GameAction = for {
     items <- searchWhat(Question(Self,HasA,What))
@@ -217,7 +228,7 @@ object Game {
       items.map(x => Edge(Self,HasA,x))
     }
 
-  def goDirection(dir: String, opposite: String): GameAction = for {
+  def goDirection(dir: String, opposite: String): GameAction = dreamOnly { for {
     here <- getLocation
     inDirs <- reifyingSearch(Question(What,NextTo(dir),here))
     val _ = debug("inDirs = "+inDirs.toString)
@@ -226,91 +237,101 @@ object Game {
     _ <- tell(Edge(here,NextTo(opposite),inDir))
     _ <- setLocation(inDirs.head)
     r <- lookAroundNoSelf
-  } yield Edge(Self,Verb("went "+dir+" in"),inDir) + r
+  } yield Edge(Self,Verb("went "+dir+" in"),inDir) + r }
 
-  def goThrough(portal: Concept, verb: Verb): GameAction = portal match {
-    case Self =>
-      for {
-        here <- getLocation
-        _ <- forget(Edge(Self,AtLocation,here))
-        r <- lookAround
-      } yield Edge(Self,verb, portal) + r
-    case _ =>
-      for {
-        otherSides <- reifyingSearch(Question(What,NextTo("through"),portal))
-        val _ = debug("other side: "+otherSides.toString)
-        val _ = assert(otherSides.size == 1)
-        val otherSide = otherSides.head
-        _ <- tell(Edge(portal,NextTo("through"),otherSide))
-        target <- locationOf(otherSide)
-        _ <- setLocation(target)
-        r <- lookAround
-      } yield Edge(Self, verb, otherSide) + r
+  def goThrough(portal: Concept, verb: Verb): GameAction = dreamOnly {
+    portal match {
+      case Self =>
+        for {
+          here <- getLocation
+          _ <- forget(Edge(Self,AtLocation,here))
+          r <- lookAround
+        } yield Edge(Self,verb, portal) + r
+      case _ =>
+        for {
+          otherSides <- reifyingSearch(Question(What,NextTo("through"),portal))
+          val _ = debug("other side: "+otherSides.toString)
+          val _ = assert(otherSides.size == 1)
+          val otherSide = otherSides.head
+          _ <- tell(Edge(portal,NextTo("through"),otherSide))
+          target <- locationOf(otherSide)
+          _ <- setLocation(target)
+          r <- lookAround
+        } yield Edge(Self, verb, otherSide) + r
+    }
   }
 
-  def reifyThereIs(archetype: Concept, location: Concept): GameAction = for {
-    real <- reify(archetype)
-    val _ = debug("reifyThereIs("+archetype.toString+", "+location.toString)
-    _ <- tell(Edge(real,AtLocation,location))
-  } yield Edge(real,AtLocation,location) :: Nil
+  def reifyThereIs(archetype: Concept, location: Concept): GameAction =
+    dreamOnly { for {
+      real <- reify(archetype)
+      val _ = debug("reifyThereIs("+archetype.toString+", "+location.toString)
+      _ <- tell(Edge(real,AtLocation,location))
+    } yield Edge(real,AtLocation,location) :: Nil }
 
   def build(archetype: Concept, location: Concept, verb: String): GameAction =
-    for {
+    dreamOnly { for {
       real <- reify(archetype)
       val _ = debug("build("+archetype.toString+", "+location.toString)
       _ <- tell(Edge(real,AtLocation,location))
     } yield
-      Edge(Self, Verb(verb), real) :: Edge(real,AtLocation,location) :: Nil
+      Edge(Self, Verb(verb), real) :: Edge(real,AtLocation,location) :: Nil }
 
   def move(real: Concept, toLocation: Concept, tellPrefix: List[Edge]=Nil)
-      : GameAction = for {
+      : GameAction = dreamOnly { for {
     currentLoc <- locationOf(real)
     val _ = debug("move("+real.toString+", "+tellPrefix.toString)
     _ <- forget(Edge(real,AtLocation,currentLoc))
     _ <- forget(Edge(currentLoc,HasA,real))
     _ <- tell(Edge(real,AtLocation,toLocation))
-  } yield tellPrefix ++ List(Edge(real, AtLocation, toLocation))
+  } yield tellPrefix ++ List(Edge(real, AtLocation, toLocation)) }
 
-  def reifyHasA(owner: Concept, archetype: Concept): GameAction = for {
-    real <- reify(archetype)
-    _ <- tell(Edge(real,AtLocation,owner))
-    _ <- tell(Edge(owner,HasA,real))
-  } yield Edge(owner,HasA,real) :: Nil
+  def reifyHasA(owner: Concept, archetype: Concept): GameAction = dreamOnly {
+    for {
+      real <- reify(archetype)
+      _ <- tell(Edge(real,AtLocation,owner))
+      _ <- tell(Edge(owner,HasA,real))
+    } yield Edge(owner,HasA,real) :: Nil
+  }
 
-  def moveOwnership(owner: Concept, item: Concept): GameAction = for {
-    currentOwner <- locationOf(item)
-    _ <- forget(Edge(item,AtLocation,currentOwner))
-    _ <- forget(Edge(currentOwner,HasA,item))
-    _ <- tell(Edge(item,AtLocation,owner))
-    _ <- tell(Edge(owner,HasA,item))
-  } yield Edge(owner,HasA,item) :: Nil
+  def moveOwnership(owner: Concept, item: Concept): GameAction = dreamOnly {
+    for {
+      currentOwner <- locationOf(item)
+      _ <- forget(Edge(item,AtLocation,currentOwner))
+      _ <- forget(Edge(currentOwner,HasA,item))
+      _ <- tell(Edge(item,AtLocation,owner))
+      _ <- tell(Edge(owner,HasA,item))
+    } yield Edge(owner,HasA,item) :: Nil
+  }
 
   def wakeUp: GameAction = for {
-    _ <- forget(Edge(Self,HasState,Sleeping))
-    _ <- tell(Edge(Self,HasState,Awake))
+    ctx: Context <- get
+    r <- (if (!isAwake(ctx)) for {
+        _ <- forget(Edge(Self,HasState,Sleeping))
+        _ <- tell(Edge(Self,HasState,Awake))
 
-    _ <- modify{ctx:Context => ctx.copy(refList=Nil, it=None)}
+        _ <- modify{ctx:Context => ctx.copy(refList=Nil, it=None)}
 
-    here <- getLocation
-    _ <- forget(Edge(Self,AtLocation,here))
-    _ <- forget(Edge(here,HasA,Self))
-    computer <- reify(Abstract("/c/en/computer"))
-    java <- reify(Abstract("/c/en/java"))
-    _ <- tell(Edge(java,AtLocation,computer))
-    _ <- setLocation(java)
+        here <- getLocation
+        _ <- forget(Edge(Self,AtLocation,here))
+        _ <- forget(Edge(here,HasA,Self))
+        computer <- reify(Abstract("/c/en/computer"))
+        java <- reify(Abstract("/c/en/java"))
+        _ <- tell(Edge(java,AtLocation,computer))
+        _ <- tell(Edge(computer,AtLocation,Unknown))
+        _ <- setLocation(java)
 
-    _ <- setIsA(Self,DreamerGame)
+        _ <- setIsA(Self,DreamerGame)
 
-    _ <- dropEverything
-    conceptnet <- reify(Abstract("/c/en/conceptnet"))
-    _ <- tell(Edge(Self,HasA,conceptnet))
-    _ <- tell(Edge(conceptnet,AtLocation,Self))
+        _ <- dropEverything
+        conceptnet <- reify(Abstract("/c/en/conceptnet"))
+        _ <- tell(Edge(Self,HasA,conceptnet))
+        _ <- tell(Edge(conceptnet,AtLocation,Self))
 
-    r <- lookAround
-  } yield
-    Edge(Self,HasState,Awake) +
-    Edge(Self,IsA,DreamerGame) +
-    r
+        r <- lookAround
+      } yield Edge(Self,HasState,Awake) + Edge(Self,IsA,DreamerGame) + r
+    else
+      state(ParseFailure())): GameAction
+  } yield r
 
   def whatState(x: Concept): GameAction = for {
     states0 <- reifyingSearch(Question(x,HasState,What))

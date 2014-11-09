@@ -24,7 +24,6 @@ sbt run
 * More GameActions: open/close, questions (where, what).
 * Factoring Tells, e.g. "In the house, there is a cat and a dog." Might require Collection concepts.
 * NPCs
-* Make reality immutable (don't allow movement/mutation while state is Awake).
 * Asking clarification: what, which
 * Enhancement? Add a "weird" adjective to objects spawned via dreamWeirdDefaults
 
