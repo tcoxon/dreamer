@@ -75,6 +75,9 @@ class GameLabel(
   def htmlColorCode(color: Color) =
     "#%02x%02x%02x" format (color.getRed, color.getGreen, color.getBlue)
 
+  def html(text: String) {
+    setText(GameLabel.surroundWithHtml(text))
+  }
   def colored(color: Color, text: String) {
     setText("<html><font color=\""+htmlColorCode(color)+"\">"+text+
         "</font></html>")
@@ -82,21 +85,21 @@ class GameLabel(
 }
 
 object GameLabel {
-  def withHtml(html: String): GameLabel = {
-    val fullHtml = """<html>
+  def surroundWithHtml(html: String): String = """<html>
       <head><style type="text/css">
         body {
           font-family: Beeb;
-          text-align: center;
         }
         p {
-          padding: 3px;
+          padding-top: 16pt;
         }
       </style></head>
       <body>
         """+html+"""
       </body></html>"""
-    new GameLabel(fullHtml)
+
+  def withHtml(html: String): GameLabel = {
+    new GameLabel(surroundWithHtml(html))
   }
 }
 
@@ -193,7 +196,8 @@ class TitleState(game: GameContainer) extends GameState(game) {
   titleLbl.setHorizontalAlignment(SwingConstants.CENTER)
   titleLbl.setBorder(BorderFactory.createEmptyBorder(50,50,20,50))
   titlePanel.add(titleLbl, BorderLayout.CENTER)
-  val subtitleLbl = GameLabel.withHtml("<p>by Tom Coxon</p><p>#procjam 2014</p>")
+  val subtitleLbl = GameLabel.withHtml(
+      "<center><p>by Tom Coxon</p><p>#procjam 2014</p></center>")
   subtitleLbl.setHorizontalAlignment(SwingConstants.CENTER)
   subtitleLbl.setBorder(BorderFactory.createEmptyBorder(10,10,10,10))
   titlePanel.add(subtitleLbl, BorderLayout.SOUTH)

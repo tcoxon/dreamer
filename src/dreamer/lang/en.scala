@@ -269,7 +269,7 @@ class English extends Language {
   ))
 
 
-  override protected def normalizeInput(text: String) = {
+  override def normalizeInput(text: String) = {
     val t1 = super.normalizeInput(text)
     if (t1.length == 0) t1
     else {

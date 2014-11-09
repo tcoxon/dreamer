@@ -9,6 +9,7 @@ class MainGameState(game: GameContainer) extends GameState(game) {
   val responseLbl = new GameLabel("")
   val inputPanel = new GamePanel(new BorderLayout)
   val promptLbl = new GameLabel("> ")
+  promptLbl.setForeground(Color.GREEN)
   val inputBox = new GameField()
   inputBox.setText("--")
   inputBox.requestFocus()
@@ -27,11 +28,11 @@ class MainGameState(game: GameContainer) extends GameState(game) {
   })
 
   import dreamer.concept._, dreamer.context._, dreamer.conceptnet._
-  import dreamer.conversation._, dreamer.lang.en._
+  import dreamer.conversation._, dreamer.lang.html_en._
   import GameUtil._
 
   var context = Context(MentalMap(upstream=Some(new ConceptNet)))
-  val conversation = Conversation(new English)
+  val conversation = Conversation(new HTMLEnglish)
 
   var firstSubmit = true
   def submit(text: String) {
@@ -66,9 +67,7 @@ class MainGameState(game: GameContainer) extends GameState(game) {
       awake: Option[Boolean]=None) {
 
     response.map{x =>
-      val x0 = x.replace(". ", ".&nbsp;&nbsp; ")
-      val x1 = if (!x.startsWith("<html>")) "<html>"+x0+"</html>" else x0
-      responseLbl.setText(x1)
+      responseLbl.html(x)
     }
   }
 

@@ -38,7 +38,7 @@ trait Language {
 
   def describe(concept: Concept, pos: NounPos): State[Context,String]
 
-  protected def normalizeInput(text: String) =
+  def normalizeInput(text: String) =
     "\\s+".r.replaceAllIn(text.trim()," ").toLowerCase()
 
   // Returns all possible meanings

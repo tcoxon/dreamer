@@ -37,7 +37,10 @@ object Concept {
   val Nothingness = Abstract("/c/en/nothing")
   val Unknown = Abstract("/c/en/unknown")
 
+  // Game-related concepts here for convenience
   val DreamerGame = Abstract("/c/en/dreamer_game")
+  val Human = Abstract("/c/en/human")
+  val Person = Abstract("/c/en/person")
 
   // States
   val Sleeping = Abstract("/c/en/sleep")

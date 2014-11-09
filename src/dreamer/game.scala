@@ -10,9 +10,6 @@ import dreamer.lang._, Language._
 object Game {
   type GameAction = State[Context,Response]
 
-  val Human = Abstract("/c/en/human")
-  val Person = Abstract("/c/en/person")
-
 
   def createPlace: State[Context,Concept] =
     for {
