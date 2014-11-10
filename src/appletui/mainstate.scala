@@ -1,6 +1,7 @@
 package appletui
 import java.awt._, java.awt.event._, javax.swing._
 import scala.collection.immutable.List
+import util.Util._
 
 
 class MainGameState(game: GameContainer) extends GameState(game) {
@@ -34,7 +35,6 @@ class MainGameState(game: GameContainer) extends GameState(game) {
   imagesPanel.add(faceImage)
 
   val locationSprite = new SpritePanel
-  locationSprite.query = "dog"
   imagesPanel.add(locationSprite)
   outputPanel.add(imagesPanel, BorderLayout.CENTER)
 
@@ -55,6 +55,8 @@ class MainGameState(game: GameContainer) extends GameState(game) {
     spawn("Thinking") {
       val (newCtx, response) = conversation.query(text)(context)
       context = newCtx
+      val location = conversation.getLocation(context)
+      debug("Current location: "+location)
       
       swingThread {
         inputBox.setForeground(Color.WHITE)
@@ -62,7 +64,8 @@ class MainGameState(game: GameContainer) extends GameState(game) {
         inputBox.requestFocus()
         updateDisplay(
           response=Some(response),
-          awake=Some(Context.isAwake(context)))
+          awake=Some(Context.isAwake(context)),
+          location=Some(location))
 
         if (firstSubmit) {
           inputBox.setText("help")
@@ -76,7 +79,8 @@ class MainGameState(game: GameContainer) extends GameState(game) {
 
   def updateDisplay(
       response: Option[String]=None,
-      awake: Option[Boolean]=None) {
+      awake: Option[Boolean]=None,
+      location: Option[String]=None) {
 
     response.map{x =>
       responseLbl.html(x)
@@ -85,6 +89,10 @@ class MainGameState(game: GameContainer) extends GameState(game) {
     awake.map{x =>
       faceImage.image = if (x) GameConstants.awakeImage
           else GameConstants.dreamingImage
+    }
+
+    location.map{x =>
+      locationSprite.query = x
     }
   }
 

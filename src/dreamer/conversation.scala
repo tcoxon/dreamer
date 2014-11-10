@@ -23,5 +23,15 @@ case class Conversation(lang: Language) {
     } yield desc
   }
 
+  def getLocation(ctx: Context): String = {
+    val ls: Set[Map[Unit,Concept]] =
+      ctx.mind.search(Question(Self,AtLocation,What))
+    (if (ls.size == 0) {
+      ctx.mind.nameOf(Unknown)
+    } else {
+      val arche = archetype(ctx, ls.head(()))
+      ctx.mind.nameOf(arche)
+    }).orNull
+  }
 }
 

@@ -26,7 +26,7 @@ object Sprites {
       spritely.setImagesPerSource(1)
       spritely.setSize(1)
       spritely.setSearchOpenClipart(true)
-      spritely.setQuery(query)
+      spritely.setQuery(uriEncode(query))
       val results = spritely.search()
       if (results.size > 0) {
         debug("Found "+results.size+" results for "+query)
@@ -51,6 +51,7 @@ class SpritePanel extends ImagePanel((1,1), null) {
     this._query = q
     this.image = null
 
+    if (q != null)
     Sprites.requestImage(q) {(q, img) =>
       swingThread { this.synchronized {
         if (q == this._query) {
