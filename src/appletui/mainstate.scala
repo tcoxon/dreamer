@@ -29,11 +29,14 @@ class MainGameState(game: GameContainer) extends GameState(game) {
     }
   })
 
+  val imagesPanel = new GamePanel(new GridLayout(1,2))
   val faceImage = new ImagePanel((300, 264), GameConstants.dreamingImage)
-  faceImage.setBorder(BorderFactory.createEmptyBorder(50,50,50,50))
-  val facePanel = new GamePanel(new BorderLayout)
-  facePanel.add(faceImage, BorderLayout.CENTER)
-  outputPanel.add(facePanel, BorderLayout.CENTER)
+  imagesPanel.add(faceImage)
+
+  val locationSprite = new SpritePanel
+  locationSprite.query = "dog"
+  imagesPanel.add(locationSprite)
+  outputPanel.add(imagesPanel, BorderLayout.CENTER)
 
 
   import dreamer.concept._, dreamer.context._, dreamer.conceptnet._

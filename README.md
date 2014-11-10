@@ -30,6 +30,14 @@ http://fontstruct.com/fontstructions/show/beeb
 Spritely, which generates the sprites used in the game is public domain.
 https://github.com/gamesbyangelina/spritely
 
+The sprites automatically searched for and displayed in the game are from
+openclipart.org, which are all released into the public domain:
+https://openclipart.org/share
+
+The blue-face protagonist sprites are copyright Tom Coxon, but you can use them
+under the CC-BY-SA license if you like.
+https://creativecommons.org/licenses/by-sa/3.0/
+
 ## TODO
 
 * Use spritely to produce sprites of locations and objects.

@@ -21,6 +21,8 @@ scalacOptions ++= Seq("-unchecked","-deprecation")
 
 libraryDependencies += "org.scalaz" %% "scalaz-core" % "7.1.0"
 
+unmanagedBase := baseDirectory.value / "lib"
+
 
 
 // Unit testing:

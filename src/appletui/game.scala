@@ -110,9 +110,22 @@ object GameLabel {
 }
 
 class ImagePanel(
-    var imageSize: (Int,Int),
-    var image: BufferedImage
+    private var _imageSize: (Int,Int),
+    private var _image: BufferedImage
   ) extends GamePanel {
+
+  def imageSize = _imageSize
+  def image = _image
+
+  def imageSize_=(sz: (Int,Int)) {
+    _imageSize = sz
+    repaint()
+  }
+
+  def image_=(img: BufferedImage) {
+    _image = img
+    repaint()
+  }
   
   override def paint(g: Graphics) {
     super.paint(g)
