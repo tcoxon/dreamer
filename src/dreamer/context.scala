@@ -13,7 +13,8 @@ case class Context(
     val mind: MentalMap,
     val r: Random=new Random,
     val refList: List[Context.Ref]=Nil,
-    val it: Option[Context.Ref]=None) {
+    val it: Option[Context.Ref]=None,
+    val justLookedAt: Option[Context.Ref]=None) {
 
   def ref(ref: Context.Ref): Context = ref.real match {
     case Realized(_) =>

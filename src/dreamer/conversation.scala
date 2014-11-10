@@ -14,6 +14,7 @@ case class Conversation(lang: Language) {
     for {
       // TODO rather than parseSpecific, maybe choose one meaning based on
       // likelihood? Perhaps choose by edge score/weight and some bayesian math?
+      _ <- modify{ctx:Context => ctx.copy(justLookedAt=None)}
       response <- lang.parseSpecific(text)
       ctx:Context <- get
       _ <- clearIt

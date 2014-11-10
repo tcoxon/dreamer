@@ -34,8 +34,8 @@ class MainGameState(game: GameContainer) extends GameState(game) {
   val faceImage = new ImagePanel((300, 264), GameConstants.dreamingImage)
   imagesPanel.add(faceImage)
 
-  val locationSprite = new SpritePanel
-  imagesPanel.add(locationSprite)
+  val sprite = new SpritePanel
+  imagesPanel.add(sprite)
   outputPanel.add(imagesPanel, BorderLayout.CENTER)
 
 
@@ -57,6 +57,9 @@ class MainGameState(game: GameContainer) extends GameState(game) {
       context = newCtx
       val location = conversation.getLocation(context)
       debug("Current location: "+location)
+      val spriteTarget = context.justLookedAt.flatMap(ref =>
+          context.mind.nameOf(ref.arche))
+      debug("Current justLookedAt: "+spriteTarget)
       
       swingThread {
         inputBox.setForeground(Color.WHITE)
@@ -65,6 +68,7 @@ class MainGameState(game: GameContainer) extends GameState(game) {
         updateDisplay(
           response=Some(response),
           awake=Some(Context.isAwake(context)),
+          spriteTarget=spriteTarget,
           location=Some(location))
 
         if (firstSubmit) {
@@ -80,6 +84,7 @@ class MainGameState(game: GameContainer) extends GameState(game) {
   def updateDisplay(
       response: Option[String]=None,
       awake: Option[Boolean]=None,
+      spriteTarget: Option[String]=None,
       location: Option[String]=None) {
 
     response.map{x =>
@@ -91,8 +96,12 @@ class MainGameState(game: GameContainer) extends GameState(game) {
           else GameConstants.dreamingImage
     }
 
-    location.map{x =>
-      locationSprite.query = x
+    val fallback = if (!location.isEmpty) location.get else null
+    val q = if (!spriteTarget.isEmpty) spriteTarget.get else fallback
+    if (!location.isEmpty || !spriteTarget.isEmpty) {
+      debug("Setting sprite with q:"+q+" fallback:"+fallback)
+      sprite.fallback = fallback
+      sprite.query = q
     }
   }
 

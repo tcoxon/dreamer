@@ -127,6 +127,17 @@ object Game {
           else action): GameAction
   } yield r
 
+  def registerLook(x: Concept): State[Context,Unit] = for {
+    isa <- getIsA(x)
+    val arche = isa match {
+        case Some(a) => a
+        case None => Thing
+      }
+    _ <- modify{ctx:Context =>
+        ctx.copy(justLookedAt=Some(Context.Ref(x, arche)))
+      }
+  } yield ()
+
 
   def lookAround: GameAction =
     for {
@@ -144,11 +155,13 @@ object Game {
           if (things1.size == 0) List(Nothingness)
           else things1
       states <- getStates(here)
+      _ <- registerLook(here)
     } yield states.map(Edge(here,HasState,_)) +
         things2.map(Edge(_,AtLocation,here))
 
   def lookIn(place: Concept): GameAction = for {
     things <- reifyingSearch(Question(What, AtLocation, place))
+    _ <- registerLook(place)
   } yield (if (things.size == 0) List(Nothingness) else things).map(
       Edge(_, AtLocation, place))
 
@@ -158,6 +171,7 @@ object Game {
       whats <- reifyingSearch(Question(x,IsA,What))
       wheres <- reifyingSearch(Question(x,AtLocation,What))
       hases <- reifyingSearch(Question(x,HasA,What))
+      _ <- registerLook(x)
     } yield 
       whats.map(w => Edge(x,IsA,w)) ++
       wheres.map(w => Edge(x,AtLocation,w)) ++
@@ -193,6 +207,7 @@ object Game {
 
   def take(item: Concept): GameAction = dreamOnly {
     for {
+      _ <- registerLook(item)
       loc <- locationOf(item)
       owner <- ownerOf(item)
       r <- (owner match {
@@ -214,6 +229,7 @@ object Game {
   }
 
   def drop(item: Concept, location: Concept): GameAction = dreamOnly { for {
+    _ <- registerLook(item)
     owner <- ownerOf(item)
     r <- (owner match {
         case Some(Self) => for {
@@ -227,6 +243,7 @@ object Game {
   } yield r }
 
   def give(item: Concept, to: Concept): GameAction = dreamOnly { for {
+    _ <- registerLook(to)
     owner <- ownerOf(item)
     r <- (owner match {
         case Some(Self) => for {
@@ -287,6 +304,7 @@ object Game {
       real <- reify(archetype)
       val _ = debug("reifyThereIs("+archetype.toString+", "+location.toString)
       _ <- tell(Edge(real,AtLocation,location))
+      _ <- registerLook(real)
     } yield Edge(real,AtLocation,location) :: Nil }
 
   def build(archetype: Concept, location: Concept, verb: String): GameAction =
@@ -294,6 +312,7 @@ object Game {
       real <- reify(archetype)
       val _ = debug("build("+archetype.toString+", "+location.toString)
       _ <- tell(Edge(real,AtLocation,location))
+      _ <- registerLook(real)
     } yield
       Edge(Self, Verb(verb), real) :: Edge(real,AtLocation,location) :: Nil }
 
@@ -311,6 +330,7 @@ object Game {
       real <- reify(archetype)
       _ <- tell(Edge(real,AtLocation,owner))
       _ <- tell(Edge(owner,HasA,real))
+      _ <- registerLook(real)
     } yield Edge(owner,HasA,real) :: Nil
   }
 
@@ -321,6 +341,7 @@ object Game {
       _ <- forget(Edge(currentOwner,HasA,item))
       _ <- tell(Edge(item,AtLocation,owner))
       _ <- tell(Edge(owner,HasA,item))
+      _ <- registerLook(item)
     } yield Edge(owner,HasA,item) :: Nil
   }
 

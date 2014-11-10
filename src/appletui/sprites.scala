@@ -14,7 +14,10 @@ object Sprites {
     if (sprites contains query) {
       val maybeImage = sprites(query)
       if (!maybeImage.isEmpty) cb(query, maybeImage.get)
+      else cb(query, null)
     } else {
+      // Stop repeated calls while fetch is in progress:
+      sprites += query -> None
       fetchImage(query)(cb)
     }
   }
@@ -36,6 +39,7 @@ object Sprites {
       } else {
         debug("No images found for "+query)
         sprites += query -> None
+        cb(query, null)
       }
     }
   }
@@ -44,6 +48,8 @@ object Sprites {
 
 
 class SpritePanel extends ImagePanel((1,1), null) {
+
+  var fallback: String = null
 
   private var _query: String = null
   def query = _query
@@ -55,8 +61,13 @@ class SpritePanel extends ImagePanel((1,1), null) {
     Sprites.requestImage(q) {(q, img) =>
       swingThread { this.synchronized {
         if (q == this._query) {
-          this.imageSize = chooseSize(img)
-          this.image = img
+          if (img == null && this.fallback != q) {
+            this.query = this.fallback
+          } else {
+            if (img != null)
+              this.imageSize = chooseSize(img)
+            this.image = img
+          }
         }
       }}
     }

@@ -40,7 +40,13 @@ https://creativecommons.org/licenses/by-sa/3.0/
 
 ## TODO
 
-* Use spritely to produce sprites of locations and objects.
+* Applet
+* Speed up spritely as much as possible: reduce search, reduce processing
+* Spritely loading/failed indication
+* Cache spritely results to disk
+* Implement 'help'
+* Erase/delete/kill commands
+* Hint at actions the dreamer can perform while playing.
 * Referent qualifiers ("the other", "that", "this", "the first", "your", "the \* from/in \*", etc.)
 * More GameActions: open/close, questions (where, what).
 * Factoring Tells, e.g. "In the house, there is a cat and a dog." Might require Collection concepts.

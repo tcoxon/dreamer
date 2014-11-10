@@ -26,7 +26,6 @@ private object ConceptNet {
         "breast" ::
         "jew" ::
         "nigger" ::
-        "gay person" ::
         "sex" ::
         // way too generic
         "something" :: "someone" :: "area" ::
@@ -36,7 +35,7 @@ private object ConceptNet {
   val badPrefixes =
         "the " :: "a " :: "any " :: "your " :: "my " :: "on " ::
         "in " :: "at " ::
-        "sex " ::
+        "sex " :: "gay " ::
         "one " :: "two " :: "three " :: "four " :: "five " ::
         "six " :: "seven " :: "eight " :: "nine " :: "ten " ::
         (0 until 9).map(_.toString).toList
