@@ -1,5 +1,6 @@
 package appletui
-import java.awt.image._
+import java.io._
+import java.awt.image._, javax.imageio._
 import org.gba.spritely._
 import GameUtil._
 import util.Util._
@@ -11,16 +12,35 @@ object Sprites {
 
 
   def requestImage(query: String)(cb: (String,BufferedImage)=>Unit) {
+    debug("cacheFile("+query+") = "+cacheFile(query))
     if (sprites contains query) {
       val maybeImage = sprites(query)
       if (!maybeImage.isEmpty) cb(query, maybeImage.get)
       else cb(query, null)
     } else {
-      // Stop repeated calls while fetch is in progress:
-      sprites += query -> None
-      fetchImage(query)(cb)
+      val cache = cacheFile(query)
+      if (cache.exists) {
+        spawn("Spritely cache read: "+cache.getAbsolutePath()) {
+          try {
+            val image = ImageIO.read(cache)
+            sprites += query -> Some(image)
+            cb(query,image)
+          } catch { case e@_ =>
+            e.printStackTrace()
+            sprites += query -> None
+          }
+        }
+      } else {
+        // Stop repeated calls while fetch is in progress:
+        sprites += query -> None
+        fetchImage(query)(cb)
+      }
     }
   }
+
+  private def cacheFile(query: String) =
+    new File(cachePath + "/" +
+        query.filter(('a' to 'z')++('A' to 'Z') contains _) + ".png")
 
   private def fetchImage(query: String)(cb: (String,BufferedImage)=>Unit) = {
     debug("Spawning spritely fetch")
@@ -36,6 +56,7 @@ object Sprites {
         val image = results.get(0)
         sprites += query -> Some(image)
         cb(query, image)
+        ImageIO.write(image, "png", cacheFile(query))
       } else {
         debug("No images found for "+query)
         sprites += query -> None
@@ -63,6 +84,7 @@ class SpritePanel extends ImagePanel((1,1), null) {
         if (q == this._query) {
           if (img == null && this.fallback != q) {
             this.query = this.fallback
+            this.fallback = null
           } else {
             if (img != null)
               this.imageSize = chooseSize(img)

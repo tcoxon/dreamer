@@ -6,6 +6,12 @@ TODO brief description of the game
 
 If you have the JAR download, ensure you have Java 1.5 installed and then simply double-click the JAR file.
 
+You can also run it without the UI:
+
+```bash
+java -cp dreamer.jar CLI
+```
+
 ## Building (source)
 
 Ensure you have sbt installed: www.scala-sbt.org
@@ -39,16 +45,14 @@ The sprites automatically searched for and displayed in the game are from
 openclipart.org, which are all released into the public domain:
 https://openclipart.org/share
 
-The blue-face protagonist sprites are also copyright Tom Coxon, but you can used
+The blue-face protagonist sprites are also copyright Tom Coxon, but you can use
 them under the CC-BY-SA license if you like.
 https://creativecommons.org/licenses/by-sa/3.0/
 
 ## TODO
 
-* Applet
 * Speed up spritely as much as possible: reduce search, reduce processing
 * Spritely loading/failed indication
-* Cache spritely results to disk
 * Implement 'help'
 * Erase/delete/kill commands
 * Hint at actions the dreamer can perform while playing.
