@@ -17,18 +17,8 @@ body {
 </head>
 <body>
 
-<script>
-  var attributes = {
-    codebase: '.',
-    code: 'GameApplet.class',
-    archive: 'dreamer.jar',
-    width: '1024', 
-    height: '768'
-  };
-  var parameters = {};
-  var version = '1.5';
-  deployJava.runApplet(attributes, parameters, version);
-</script>
+<applet code="GameApplet.class" archive="dreamer.jar"
+    width="1024" height="768"></applet>
 
 <p>Applet not working? Download the executable JAR:</p>
 <p><a href="dreamer.zip">dreamer.zip (22MB)</a></p>
