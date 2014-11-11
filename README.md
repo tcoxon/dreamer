@@ -1,6 +1,10 @@
 # Dreamer of Electric Sheep
 
-TODO brief description of the game
+BBC-Micro-style procedurally-generated text adventure with sprites scraped from the web.
+
+![screenshot](http://bytten-studio.com/random/dreamer/014.png)
+
+Locations and descriptions are generated from the ConceptNet database, a crowd-sourced machine-readable database of common sense knowledge about the world. **Being crowd-sourced, it can contain offensive content and incorrect information.** While I have done my best to blacklist the offensive content I've come across, the database is so huge that there is not much more I can feasibly do.
 
 ## Running (download)
 
@@ -41,6 +45,9 @@ http://fontstruct.com/fontstructions/show/beeb
 Spritely, which generates the sprites used in the game is public domain.
 https://github.com/gamesbyangelina/spritely
 
+Spritely relies on Apache Commons libraries, under the Apache 2.0 license.
+http://www.apache.org/licenses/LICENSE-2.0.html
+
 The sprites automatically searched for and displayed in the game are from
 openclipart.org, which are all released into the public domain:
 https://openclipart.org/share
@@ -51,7 +58,7 @@ https://creativecommons.org/licenses/by-sa/3.0/
 
 ## TODO
 
-* Info front page.
+* More info in html/index.html
 * Speed up spritely as much as possible: reduce search, reduce processing
 * Spritely loading/failed indication
 * Erase/delete/kill commands
@@ -64,6 +71,8 @@ https://creativecommons.org/licenses/by-sa/3.0/
 * Enhancement? Add a "weird" adjective to objects spawned via dreamWeirdDefaults
 
 ## Problems with ConceptNet
+
+I intend to blog about these after #procjam finishes.
 
 * It can be offensive. Unfiltered, it will put gay people in closets and prostitutes in bedrooms.
 * Relations are sometimes reversed, e.g. restaurant AtLocation rice
