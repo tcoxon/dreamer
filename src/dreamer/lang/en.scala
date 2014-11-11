@@ -251,9 +251,20 @@ class English extends Language {
     //"what (is|are) (.+)" -> {}, // referent could be abstract or realized...
     //"where (is|are) (.+)" -> {},
     //"what do(es)? (.+) have" -> {},
-    //
-    //// Miscellaneous
-    //"h(elp)?( (.*))?" -> {}
+    
+    // Miscellaneous
+    "h(elp)?" -> {case _ =>
+      forked(UsageInfo(
+          "I can look around. I can look at things. "+
+          "I can look inside things.") +
+        UsageInfo("I can enter places. I can leave places.")+
+        UsageInfo("I can go through doors. I can ride vehicles.")+
+        UsageInfo("I can go N/S/E/W. I can go into places.")+
+        UsageInfo("I can take things. I can drop things."+
+          "I can give things. I have an inventory.")+
+        UsageInfo("I can create things.")+
+        UsageInfo("I can move things into places."))
+    },
 
 
     // Dreamer game:
@@ -499,6 +510,7 @@ class English extends Language {
         _ <- put(ctx1)
       } yield desc.trim()
     case CantDoThat => state("I can't do that.")
+    case UsageInfo(x) => state(x)
   }
 
 }

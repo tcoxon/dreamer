@@ -10,11 +10,16 @@ import dreamer.lang._, dreamer.lang.en._, Language._
 abstract sealed class Sentence(val color: String) {
   def text: String
   override def toString: String = "<font color='"+color+"'>"+text+"</font>"
+  def isUsage: Boolean = this match {
+    case UsageSentence(_) => true
+    case _ => false
+  }
 }
 case class NormalSentence(val text: String) extends Sentence("#FFFFFF")
 case class ErrorSentence(val text: String) extends Sentence("#FFFF00")
 case class SelfStateSentence(val text: String) extends Sentence("#00FFFF")
 case class ScarySentence(val text: String) extends Sentence("#FF0000")
+case class UsageSentence(val text: String) extends Sentence("#FFFF00")
 
 
 class HTMLEnglish extends English {
@@ -56,6 +61,7 @@ class HTMLEnglish extends English {
       case Clarify(_) | ParseFailure() | CantDoThat =>
         super.describe(response).map(desc => ErrorSentence(desc) :: Nil)
       case MultiResponse(resps) => toSentences(resps)
+      case UsageInfo(text) => state(List(UsageSentence(text)))
     }
 
   override def describe(response: Response): State[Context,String] = for {
@@ -66,7 +72,7 @@ class HTMLEnglish extends English {
     var color: String = null
     var curr = ""
     for (sentence <- sentences) {
-      if (sentence.color != color) {
+      if (sentence.color != color || sentence.isUsage) {
         if (color != null) curr += "</p>"
         color = sentence.color
         curr += "<p style='color: "+color+"'>"

@@ -49,6 +49,7 @@ object Sprites {
       spritely.setImagesPerSource(1)
       spritely.setSize(1)
       spritely.setSearchOpenClipart(true)
+      //spritely.setSearchGoogleImages(true)
       spritely.setQuery(uriEncode(query))
       val results = spritely.search()
       if (results.size > 0) {

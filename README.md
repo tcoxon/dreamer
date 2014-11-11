@@ -53,7 +53,6 @@ https://creativecommons.org/licenses/by-sa/3.0/
 
 * Speed up spritely as much as possible: reduce search, reduce processing
 * Spritely loading/failed indication
-* Implement 'help'
 * Erase/delete/kill commands
 * Hint at actions the dreamer can perform while playing.
 * Referent qualifiers ("the other", "that", "this", "the first", "your", "the \* from/in \*", etc.)
