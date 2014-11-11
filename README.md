@@ -21,7 +21,7 @@ java -cp dreamer.jar CLI
 Ensure you have sbt installed: www.scala-sbt.org
 
 ```bash
-sbt one-jar
+sbt assembly
 ```
 
 You can also run it from source:
@@ -29,6 +29,8 @@ You can also run it from source:
 ```bash
 sbt run
 ```
+
+The tests are currently all failing. Ignore them.
 
 ## License
 
@@ -58,6 +60,7 @@ https://creativecommons.org/licenses/by-sa/3.0/
 
 ## TODO
 
+* Fix tests - they fail right now
 * More info in html/index.html
 * Speed up spritely as much as possible: reduce search, reduce processing
 * Spritely loading/failed indication
@@ -66,7 +69,6 @@ https://creativecommons.org/licenses/by-sa/3.0/
 * Referent qualifiers ("the other", "that", "this", "the first", "your", "the \* from/in \*", etc.)
 * More GameActions: open/close, questions (where, what).
 * Factoring Tells, e.g. "In the house, there is a cat and a dog." Might require Collection concepts.
-* NPCs
 * Asking clarification: what, which
 * Enhancement? Add a "weird" adjective to objects spawned via dreamWeirdDefaults
 
