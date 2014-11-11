@@ -6,6 +6,10 @@ BBC-Micro-style procedurally-generated text adventure with sprites scraped from 
 
 Locations and descriptions are generated from the ConceptNet database, a crowd-sourced machine-readable database of common sense knowledge about the world. **Being crowd-sourced, it can contain offensive content and incorrect information.** While I have done my best to blacklist the offensive content I've come across, the database is so huge that there is not much more I can feasibly do.
 
+You can play a live version here: http://bytten-studio.com/games/dreamer/
+
+A binary download is also linked there.
+
 ## Running (download)
 
 If you have the JAR download, ensure you have Java 1.5 installed and then simply double-click the JAR file.
