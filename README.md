@@ -2,7 +2,11 @@
 
 TODO brief description of the game
 
-## Building
+## Running (download)
+
+If you have the JAR download, ensure you have Java 1.5 installed and then simply double-click the JAR file.
+
+## Building (source)
 
 Ensure you have sbt installed: www.scala-sbt.org
 
@@ -10,7 +14,7 @@ Ensure you have sbt installed: www.scala-sbt.org
 sbt one-jar
 ```
 
-## Running
+You can also run it from source:
 
 ```bash
 sbt run
@@ -18,7 +22,8 @@ sbt run
 
 ## License
 
-Dreamer of Electric Sheep is licensed to you under the terms of the MIT license.
+Dreamer of Electric Sheep is copyright 2014 Tom Coxon and licensed to you under
+the terms of the MIT license.
 http://opensource.org/licenses/MIT
 
 ConceptNet5 data is under the CC-BY-SA license.
@@ -34,8 +39,8 @@ The sprites automatically searched for and displayed in the game are from
 openclipart.org, which are all released into the public domain:
 https://openclipart.org/share
 
-The blue-face protagonist sprites are copyright Tom Coxon, but you can use them
-under the CC-BY-SA license if you like.
+The blue-face protagonist sprites are also copyright Tom Coxon, but you can used
+them under the CC-BY-SA license if you like.
 https://creativecommons.org/licenses/by-sa/3.0/
 
 ## TODO
@@ -64,7 +69,7 @@ https://creativecommons.org/licenses/by-sa/3.0/
 * HasA relationship isn't always between nouns, e.g. "The old person has a so much to teach us."
 * Related parts of the graph seem barely connected?
 
-## Good points
+## Good things about ConceptNet
 
 * The license! Hard to imagine CC-BY-SA being unacceptable to anyone reasonable.
 

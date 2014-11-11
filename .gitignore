@@ -2,3 +2,6 @@ target
 .*.swp
 .*.swo
 dreamer-cache
+html/*.zip
+html/*.ttf
+html/*.jar
