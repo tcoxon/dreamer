@@ -4,10 +4,13 @@ set -ex
 KEYSTORE=""
 KEYSTORE_ALIAS=dreamer1
 if test "x$1" == "x"; then
-    echo "JAR WILL BE UNSIGNED" >&2
+    echo "Provide path to the keystore" >&2
+    exit 1
 else
     KEYSTORE="$1"
 fi
+
+sbt assembly
 
 JAR=target/scala-2.9.3/dreamer.jar
 

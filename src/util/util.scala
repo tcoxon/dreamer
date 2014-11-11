@@ -28,13 +28,19 @@ object Util {
     readStream(url.openStream())
   }
 
+  lazy val cachePath = {
+    val tmpdir = System.getProperty("java.io.tmpdir")
+    debug("java.io.tmpdir: "+tmpdir)
+    tmpdir + "/dreamer-cache"
+  }
+
   def fetchURLCached(url: URL): String = {
     val hash = url.toString.hashCode % 256
-    val cacheFName = "dreamer-cache/urlhash"+hash.toString+".json";
+    val cacheFName = cachePath + "/urlhash"+hash.toString+".json";
     val file = new File(cacheFName)
 
     if (!file.getParentFile().exists) {
-      val succ = !file.getParentFile.mkdirs()
+      val succ = file.getParentFile.mkdirs()
       // TODO FIXME do some real error handling please
       assert(succ)
     }
