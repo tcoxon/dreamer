@@ -58,13 +58,23 @@ object GameUtil {
 
   def spawn(name: String)(code: =>Unit) {
     new Thread(name) {
-      override def run() { code }
+      override def run() {
+        try { code }
+        catch { case e@_ =>
+          e.printStackTrace()
+        }
+      }
     }.start()
   }
 
   def swingThread(code: =>Unit) {
     SwingUtilities.invokeLater(new Runnable() {
-      override def run() { code }
+      override def run() {
+        try { code }
+        catch { case e@_ =>
+          e.printStackTrace()
+        }
+      }
     })
   }
 
