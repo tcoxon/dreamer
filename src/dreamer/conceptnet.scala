@@ -20,12 +20,9 @@ private object ConceptNet {
 
   val bannedWords =
         // offensive
-        "prostitute" ::
-        "hooker" ::
-        "period" ::
-        "breast" ::
-        "jew" ::
-        "nigger" ::
+        "prostitute" :: "hooker" :: "whore" ::
+        "period" :: "breast" :: "pussy" ::
+        "jew" :: "nigger" ::
         "sex" ::
         // way too generic
         "something" :: "someone" :: "area" ::
