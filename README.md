@@ -51,6 +51,7 @@ https://creativecommons.org/licenses/by-sa/3.0/
 
 ## TODO
 
+* Info front page.
 * Speed up spritely as much as possible: reduce search, reduce processing
 * Spritely loading/failed indication
 * Erase/delete/kill commands
